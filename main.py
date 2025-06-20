@@ -1,36 +1,6 @@
 import pandas as pd
 from scrapers.scraper_tradeify import scrape_site_tradeify  # Import the function directly
-from scrapers.apex_trader_funding_scraper import ApexTraderFundingScraper  # Import the Apex scraper class
-
-def scrape_apex_trader():
-    """Wrapper function to scrape Apex Trader Funding and return data in consistent format"""
-    try:
-        scraper = ApexTraderFundingScraper()
-        plans = scraper.scrape_main_page()
-        scraper.scrape_additional_pages()  # Get additional data if available
-        
-        # Convert ApexTraderFunding data to consistent format
-        apex_data = []
-        for plan in scraper.plans:
-            apex_data.append({
-                'business_name': plan.business_name,
-                'plan_name': f"{plan.account_size} Account",
-                'account_size': plan.account_size,
-                'price_raw': plan.sale_price,
-                'funded_price': plan.funded_full_price,
-                'discount_code': plan.discount_code,
-                'trial_type': plan.trial_type,
-                'trustpilot_score': plan.trustpilot_score,
-                'profit_goal': plan.profit_goal,
-                'source': 'Apex Trader Funding'
-            })
-        
-        print(f"Apex Trader Funding: Scraped {len(apex_data)} plans")
-        return apex_data
-        
-    except Exception as e:
-        print(f"Error scraping Apex Trader Funding: {e}")
-        return []
+from scrapers.apex_trader_funding_scraper import scrape_site_apex  # Import the wrapper function
 
 def main():
     try:
@@ -40,9 +10,10 @@ def main():
         print("Starting Tradeify scraper...")
         data_tradeify = scrape_site_tradeify()
         if data_tradeify:
-            # Add source identifier to Tradeify data
+            # Add source identifier to Tradeify data if not already present
             for record in data_tradeify:
-                record['source'] = 'Tradeify'
+                if 'source' not in record:
+                    record['source'] = 'Tradeify'
             all_data.extend(data_tradeify)
             print(f"Tradeify: Successfully scraped {len(data_tradeify)} records")
         else:
@@ -50,7 +21,7 @@ def main():
         
         # Run Apex Trader Funding scraper
         print("\nStarting Apex Trader Funding scraper...")
-        data_apex = scrape_apex_trader()
+        data_apex = scrape_site_apex()
         if data_apex:
             all_data.extend(data_apex)
             print(f"Apex Trader Funding: Successfully scraped {len(data_apex)} records")
