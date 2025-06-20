@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 # Import the base scraper class (assuming it's in the same file or imported)
 from .BaseScraper import BaseScraper, TradingPlan
 
-class TradeifyScraper(BaseScraper):
+class scrape_site_tradeify(BaseScraper):
     def __init__(self):
         super().__init__("https://tradeify.co", "Tradeify")
     
