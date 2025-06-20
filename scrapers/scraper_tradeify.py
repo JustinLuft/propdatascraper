@@ -34,7 +34,7 @@ class TradeifyScraper:
     def scrape_pricing_page(self, url=None):
         """Scrape the pricing page for account plans"""
         if not url:
-            url = f"{self.base_url}/plan"  # Adjust URL as needed
+            url = f"{self.base_url}"  # Adjust URL as needed
             
         try:
             if not self.driver:
