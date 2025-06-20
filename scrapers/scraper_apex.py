@@ -17,7 +17,7 @@ class TradingPlan:
     trustpilot_score: str
     profit_goal: str
 
-class ApexScraper:
+class ApexTraderFundingScraper:
     def __init__(self):
         self.base_url = "https://apextraderfunding.com"
         self.headers = {
@@ -199,7 +199,34 @@ class ApexScraper:
                 })
         print(f"Data saved to {filename}")
     
-    def print_results(self, plans: List[TradingPlan]):
+    def scrape_main_page(self) -> List[TradingPlan]:
+        """Main scraping method - renamed to match your existing code"""
+        return self.scrape()
+    
+    def scrape_additional_pages(self):
+        """Placeholder for compatibility - does nothing in optimized version"""
+        pass
+    
+    def get_standardized_data(self) -> List[Dict]:
+        """Return data in standardized format for combining with other scrapers"""
+        if not hasattr(self, 'plans') or not self.plans:
+            self.plans = self.scrape()
+        
+        standardized_data = []
+        for plan in self.plans:
+            standardized_data.append({
+                'business_name': plan.business_name,
+                'plan_name': f"{plan.account_size} {plan.trial_type}",
+                'account_size': plan.account_size,
+                'price_raw': plan.sale_price,
+                'funded_price': plan.funded_full_price,
+                'discount_code': plan.discount_code,
+                'trial_type': plan.trial_type,
+                'trustpilot_score': plan.trustpilot_score,
+                'profit_goal': plan.profit_goal,
+                'source': 'Apex Trader Funding'
+            })
+        return standardized_data
         """Print results"""
         print(f"\nApex Trader Funding - {len(plans)} plans found:")
         print("-" * 50)
@@ -213,7 +240,7 @@ class ApexScraper:
 
 # Usage
 if __name__ == "__main__":
-    scraper = ApexScraper()
-    plans = scraper.scrape()
-    scraper.print_results(plans)
+    scraper = ApexTraderFundingScraper()
+    plans = scraper.scrape_main_page()
+    scraper.print_results()
     scraper.save_to_csv(plans)
