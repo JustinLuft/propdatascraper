@@ -6,7 +6,7 @@ def main():
     data_a = scrape_site_tradeify()
     
     # Combine data
-    all_data = data_a + data_b + data_c
+    all_data = data_a
     
     # Save to CSV
     df = pd.DataFrame(all_data)
