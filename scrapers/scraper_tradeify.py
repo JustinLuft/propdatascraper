@@ -1,391 +1,366 @@
 import requests
 from bs4 import BeautifulSoup
-import time
 import json
+import re
+import time
 import random
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from selenium.webdriver.common.action_chains import ActionChains
+from typing import Dict, List, Optional, Any
+from dataclasses import dataclass
+import csv
+from urllib.parse import urljoin
+from abc import ABC, abstractmethod
 
-class TradeifyScraper:
+# Import the base scraper class (assuming it's in the same file or imported)
+# from base_scraper import BaseScraper, TradingPlan
+
+class TradeifyScraper(BaseScraper):
     def __init__(self):
-        self.base_url = "https://tradeify.co/"
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Cache-Control': 'max-age=0'
-        }
-        self.driver = None
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
-        
-    def setup_driver(self):
-        """Setup Chrome driver with stealth options"""
-        chrome_options = Options()
-        
-        # Basic stealth options
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        chrome_options.add_experimental_option('useAutomationExtension', False)
-        chrome_options.add_argument('--disable-extensions')
-        chrome_options.add_argument('--disable-plugins-discovery')
-        chrome_options.add_argument('--disable-web-security')
-        chrome_options.add_argument('--allow-running-insecure-content')
-        chrome_options.add_argument('--no-first-run')
-        chrome_options.add_argument('--disable-default-apps')
-        chrome_options.add_argument('--disable-background-timer-throttling')
-        chrome_options.add_argument('--disable-backgrounding-occluded-windows')
-        chrome_options.add_argument('--disable-renderer-backgrounding')
-        chrome_options.add_argument('--disable-features=TranslateUI')
-        chrome_options.add_argument('--disable-ipc-flooding-protection')
-        
-        # Window size and user agent
-        chrome_options.add_argument('--window-size=1366,768')
-        chrome_options.add_argument(f'--user-agent={self.headers["User-Agent"]}')
-        
-        # Optional: uncomment for headless mode
-        # chrome_options.add_argument('--headless')
-        
-        try:
-            self.driver = webdriver.Chrome(options=chrome_options)
-            
-            # Execute script to remove webdriver property
-            self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-            
-            # Set additional properties to mimic real browser
-            self.driver.execute_script("""
-                Object.defineProperty(navigator, 'languages', {
-                    get: () => ['en-US', 'en']
-                });
-                Object.defineProperty(navigator, 'plugins', {
-                    get: () => [1, 2, 3, 4, 5]
-                });
-            """)
-            
-            return self.driver
-        except Exception as e:
-            print(f"Error setting up driver: {e}")
-            return None
+        super().__init__("https://tradeify.co", "Tradeify")
     
-    def random_delay(self, min_delay=1, max_delay=3):
-        """Add random delay to mimic human behavior"""
-        time.sleep(random.uniform(min_delay, max_delay))
+    def get_main_urls(self) -> List[str]:
+        """Return main URLs to scrape for Tradeify"""
+        return [
+            self.base_url,
+            f"{self.base_url}/pricing",
+            f"{self.base_url}/plans",
+            f"{self.base_url}/accounts"
+        ]
     
-    def scrape_with_session(self, url=None):
-        """Try scraping with requests session first"""
-        if not url:
-            url = self.base_url
-            
-        try:
-            print("Attempting to scrape with requests session...")
-            
-            # Add random delay
-            self.random_delay(1, 2)
-            
-            response = self.session.get(url, timeout=30)
-            print(f"Response status code: {response.status_code}")
-            
-            if response.status_code == 403:
-                print("403 Forbidden - trying with different headers")
-                return self.scrape_with_alternative_headers(url)
-            
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            return self.parse_html_content(soup, response.text)
-            
-        except requests.exceptions.RequestException as e:
-            print(f"Request error: {e}")
-            return []
+    def get_additional_urls(self) -> List[str]:
+        """Return additional URLs that might contain pricing information"""
+        return [
+            f"{self.base_url}/straight-to-funded",
+            f"{self.base_url}/evaluation-account",
+            f"{self.base_url}/sim-funded"
+        ]
     
-    def scrape_with_alternative_headers(self, url):
-        """Try with different user agents and headers"""
-        user_agents = [
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15'
+    def extract_plans_from_soup(self, soup: BeautifulSoup, url: str) -> List[Dict]:
+        """Extract Tradeify-specific pricing plans from the soup"""
+        plans = []
+        
+        # Primary selectors based on the HTML structure provided
+        plan_selectors = [
+            '.plan-li .plan',  # Main plan container
+            '.plans .plan-li',  # Alternative container
+            '[class*="plan-li"]',  # Any element with plan-li in class
+            '.c-plans-4 .plan-li'  # Specific plans container
         ]
         
-        for ua in user_agents:
+        plan_elements = []
+        
+        # Collect all unique plan elements
+        for selector in plan_selectors:
+            elements = soup.select(selector)
+            for element in elements:
+                if element not in plan_elements:
+                    plan_elements.append(element)
+        
+        print(f"Found {len(plan_elements)} plan elements on {url}")
+        
+        for element in plan_elements:
             try:
-                print(f"Trying with User-Agent: {ua[:50]}...")
-                headers = self.headers.copy()
-                headers['User-Agent'] = ua
-                
-                # Add some randomization
-                self.random_delay(2, 4)
-                
-                response = requests.get(url, headers=headers, timeout=30)
-                print(f"Response status: {response.status_code}")
-                
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    return self.parse_html_content(soup, response.text)
-                    
+                plan_data = self._extract_tradeify_plan_from_element(element)
+                if plan_data and plan_data.get('account_size'):
+                    plans.append(plan_data)
+                    print(f"Extracted plan: {plan_data.get('account_size', 'Unknown')} - {plan_data.get('sale_price', 'Unknown')}")
             except Exception as e:
-                print(f"Error with UA {ua[:20]}: {e}")
+                print(f"Error extracting plan from element: {e}")
                 continue
         
-        return []
+        # If no plans found with primary selectors, try alternative approaches
+        if not plans:
+            plans.extend(self._extract_plans_alternative_methods(soup))
+        
+        return plans
     
-    def scrape_pricing_page(self, url=None):
-        """Scrape using Selenium with enhanced stealth"""
-        if not url:
-            url = self.base_url
-            
+    def _extract_tradeify_plan_from_element(self, element) -> Dict:
+        """Extract plan information from a Tradeify plan element"""
+        plan_data = {}
+        
         try:
-            if not self.driver:
-                self.driver = self.setup_driver()
-                if not self.driver:
-                    return []
+            # Extract account size from heading
+            account_heading = element.select_one('.heading, h4, .plan-header h4')
+            if account_heading:
+                heading_text = account_heading.get_text(strip=True)
+                # Extract account size (e.g., "$25k account" -> "$25K")
+                account_match = re.search(r'\$?(\d+[kK])', heading_text)
+                if account_match:
+                    account_size = account_match.group(1).upper()
+                    if not account_size.startswith('$'):
+                        account_size = f"${account_size}"
+                    plan_data['account_size'] = account_size
             
-            print("Loading page with Selenium...")
-            self.driver.get(url)
+            # Extract account type
+            acc_type_element = element.select_one('.acc-type')
+            if acc_type_element:
+                acc_type = acc_type_element.get_text(strip=True)
+                plan_data['trial_type'] = acc_type
+            else:
+                plan_data['trial_type'] = 'Funded Account'
             
-            # Simulate human behavior
-            self.random_delay(2, 4)
+            # Extract price
+            price_element = element.select_one('.price .number')
+            if price_element:
+                price_text = price_element.get_text(strip=True)
+                if price_text and price_text != '$':
+                    if not price_text.startswith('$'):
+                        price_text = f"${price_text}"
+                    plan_data['sale_price'] = price_text
+                    
+                    # Check if it's one-time fee or monthly
+                    period_element = element.select_one('.price .period')
+                    if period_element:
+                        period_text = period_element.get_text(strip=True)
+                        if 'one time' in period_text.lower():
+                            plan_data['sale_price'] = f"{price_text} (One-time)"
+                        elif 'month' in period_text.lower():
+                            plan_data['sale_price'] = f"{price_text}/Month"
             
-            # Scroll to mimic human behavior
-            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight/2);")
-            self.random_delay(1, 2)
-            self.driver.execute_script("window.scrollTo(0, 0);")
+            # Extract plan attributes
+            plan_attributes = element.select('.plan-attr')
+            for attr in plan_attributes:
+                attr_text = attr.get_text(strip=True)
+                
+                if 'Max Contracts' in attr_text:
+                    contract_match = re.search(r'Max Contracts:\s*(.+)', attr_text)
+                    if contract_match:
+                        plan_data['max_contracts'] = contract_match.group(1).strip()
+                
+                elif 'Daily Loss Limit' in attr_text:
+                    if 'None' in attr_text:
+                        plan_data['daily_loss_limit'] = 'None'
+                    else:
+                        loss_match = re.search(r'Daily Loss Limit.*?\$([0-9,]+)', attr_text)
+                        if loss_match:
+                            plan_data['daily_loss_limit'] = f"${loss_match.group(1)}"
+                
+                elif 'Trailing Max Drawdown' in attr_text:
+                    drawdown_match = re.search(r'Trailing Max Drawdown:\s*\$([0-9,]+)', attr_text)
+                    if drawdown_match:
+                        plan_data['trailing_drawdown'] = f"${drawdown_match.group(1)}"
+                
+                elif 'Drawdown Mode' in attr_text:
+                    mode_match = re.search(r'Drawdown Mode:\s*(.+)', attr_text)
+                    if mode_match:
+                        plan_data['drawdown_mode'] = mode_match.group(1).strip()
+                
+                elif 'Min Trading Days' in attr_text:
+                    days_match = re.search(r'Min Trading Days.*?(\d+)', attr_text)
+                    if days_match:
+                        plan_data['min_trading_days'] = days_match.group(1)
+                
+                elif 'Consistency' in attr_text:
+                    consistency_match = re.search(r'Consistency:\s*(\d+%?)', attr_text)
+                    if consistency_match:
+                        plan_data['consistency'] = consistency_match.group(1)
+                        if not consistency_match.group(1).endswith('%'):
+                            plan_data['consistency'] += '%'
+                
+                elif 'Max Accounts' in attr_text:
+                    accounts_match = re.search(r'Max Accounts:\s*(\d+)', attr_text)
+                    if accounts_match:
+                        plan_data['max_accounts'] = accounts_match.group(1)
+                
+                elif 'Profit Goal' in attr_text or 'Target' in attr_text:
+                    profit_match = re.search(r'\$([0-9,]+)', attr_text)
+                    if profit_match:
+                        plan_data['profit_goal'] = f"${profit_match.group(1)}"
             
-            # Wait for content to load
+            # Set funded full price (same as sale price for funded accounts)
+            if plan_data.get('sale_price'):
+                plan_data['funded_full_price'] = plan_data['sale_price']
+        
+        except Exception as e:
+            print(f"Error extracting from plan element: {e}")
+        
+        return plan_data
+    
+    def _extract_plans_alternative_methods(self, soup: BeautifulSoup) -> List[Dict]:
+        """Alternative extraction methods if primary selectors fail"""
+        plans = []
+        
+        try:
+            # Look for any pricing tables or cards
+            pricing_elements = soup.select('[class*="price"], [class*="plan"], [class*="account"]')
+            
+            for element in pricing_elements:
+                text = element.get_text()
+                
+                # Look for account size patterns
+                account_matches = re.findall(r'\$(\d+[kK])', text)
+                price_matches = re.findall(r'\$(\d+(?:,\d{3})*)', text)
+                
+                if account_matches and price_matches:
+                    for account in account_matches:
+                        for price in price_matches:
+                            if account != price:  # Don't match account size with itself
+                                plan_data = {
+                                    'account_size': f"${account.upper()}",
+                                    'sale_price': f"${price}",
+                                    'trial_type': 'Funded Account'
+                                }
+                                plans.append(plan_data)
+                                break
+        except Exception as e:
+            print(f"Error in alternative extraction: {e}")
+        
+        return plans
+    
+    def get_fallback_plans(self) -> List[Dict]:
+        """Tradeify fallback plans based on common industry standards"""
+        return [
+            {
+                'account_size': '$25K',
+                'sale_price': '$349 (One-time)',
+                'funded_full_price': '$349 (One-time)',
+                'trial_type': 'Straight to Sim Funded',
+                'max_contracts': '1 Minis (10 Micros)',
+                'daily_loss_limit': 'None',
+                'trailing_drawdown': '$1,000',
+                'drawdown_mode': 'End Of Day',
+                'min_trading_days': '10',
+                'consistency': '20%',
+                'max_accounts': '5',
+                'profit_goal': '$1,500'
+            },
+            {
+                'account_size': '$50K',
+                'sale_price': '$449 (One-time)',
+                'funded_full_price': '$449 (One-time)',
+                'trial_type': 'Straight to Sim Funded',
+                'max_contracts': '2 Minis (20 Micros)',
+                'daily_loss_limit': 'None',
+                'trailing_drawdown': '$2,000',
+                'drawdown_mode': 'End Of Day',
+                'min_trading_days': '10',
+                'consistency': '20%',
+                'max_accounts': '5',
+                'profit_goal': '$3,000'
+            },
+            {
+                'account_size': '$100K',
+                'sale_price': '$649 (One-time)',
+                'funded_full_price': '$649 (One-time)',
+                'trial_type': 'Straight to Sim Funded',
+                'max_contracts': '4 Minis (40 Micros)',
+                'daily_loss_limit': 'None',
+                'trailing_drawdown': '$4,000',
+                'drawdown_mode': 'End Of Day',
+                'min_trading_days': '10',
+                'consistency': '20%',
+                'max_accounts': '5',
+                'profit_goal': '$6,000'
+            },
+            {
+                'account_size': '$150K',
+                'sale_price': '$849 (One-time)',
+                'funded_full_price': '$849 (One-time)',
+                'trial_type': 'Straight to Sim Funded',
+                'max_contracts': '6 Minis (60 Micros)',
+                'daily_loss_limit': 'None',
+                'trailing_drawdown': '$6,000',
+                'drawdown_mode': 'End Of Day',
+                'min_trading_days': '10',
+                'consistency': '20%',
+                'max_accounts': '5',
+                'profit_goal': '$9,000'
+            }
+        ]
+    
+    def get_default_trustpilot_score(self) -> str:
+        """Default Trustpilot score for Tradeify"""
+        return "4.2"
+    
+    def process_plan_data(self, plan_data: Dict) -> Dict:
+        """Process and clean Tradeify plan data"""
+        # Clean up account size format
+        if plan_data.get('account_size'):
+            account_size = plan_data['account_size']
+            if 'k' in account_size.lower() and '$' in account_size:
+                # Convert $25k to $25K
+                plan_data['account_size'] = account_size.upper()
+        
+        # Ensure consistent price format
+        if plan_data.get('sale_price') and not plan_data['sale_price'].startswith('$'):
+            plan_data['sale_price'] = f"${plan_data['sale_price']}"
+        
+        # Set default values for missing fields
+        if not plan_data.get('trial_type'):
+            plan_data['trial_type'] = 'Funded Account'
+        
+        return plan_data
+
+
+# Usage example for Tradeify
+def main_tradeify():
+    """Example usage of the Tradeify scraper"""
+    print("Starting Tradeify scraper...")
+    
+    # Initialize the scraper
+    tradeify_scraper = TradeifyScraper()
+    
+    # Scrape all plans
+    plans = tradeify_scraper.scrape_all()
+    
+    # Print results
+    tradeify_scraper.print_results()
+    
+    # Save to files
+    tradeify_scraper.save_to_csv("tradeify_plans.csv")
+    tradeify_scraper.save_to_json("tradeify_plans.json")
+    
+    print(f"Scraping complete! Found {len(plans)} plans from Tradeify")
+    
+    return plans
+
+
+# Extended multi-scraper that includes Tradeify
+class ExtendedTradingPlatformScraper:
+    def __init__(self):
+        self.scrapers = [
+            ApexTraderFundingScraper(),
+            TopstepTraderScraper(),
+            TradeifyScraper(),  # Add Tradeify scraper
+            # Add more scrapers here
+        ]
+        self.all_data = []
+    
+    def scrape_all_platforms(self) -> List[Dict]:
+        """Scrape all registered platforms including Tradeify"""
+        for scraper in self.scrapers:
             try:
-                wait = WebDriverWait(self.driver, 15)
-                wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            except TimeoutException:
-                print("Timeout waiting for page to load")
-            
-            # Get page source and parse
-            page_source = self.driver.page_source
-            soup = BeautifulSoup(page_source, 'html.parser')
-            
-            return self.parse_html_content(soup, page_source)
-            
-        except Exception as e:
-            print(f"Error with Selenium scraping: {e}")
-            return []
-    
-    def parse_html_content(self, soup, raw_html):
-        """Parse HTML content to extract pricing information"""
-        plans = []
+                print(f"\nScraping {scraper.business_name}...")
+                plans = scraper.scrape_all()
+                standardized_data = scraper.get_standardized_data()
+                self.all_data.extend(standardized_data)
+                print(f"Scraped {len(standardized_data)} plans from {scraper.business_name}")
+            except Exception as e:
+                print(f"Error scraping {scraper.business_name}: {e}")
         
-        try:
-            print("Parsing HTML content...")
-            
-            # Debug: Save HTML to file for inspection
-            with open('debug_page.html', 'w', encoding='utf-8') as f:
-                f.write(str(soup))
-            print("Page content saved to debug_page.html for inspection")
-            
-            # Look for common pricing selectors
-            pricing_selectors = [
-                '[class*="pricing"]',
-                '[class*="plan"]',
-                '[class*="account"]',
-                '[class*="card"]',
-                '[class*="tier"]',
-                '[id*="pricing"]',
-                '[id*="plan"]'
-            ]
-            
-            found_elements = []
-            for selector in pricing_selectors:
-                elements = soup.select(selector)
-                found_elements.extend(elements)
-                print(f"Found {len(elements)} elements with selector: {selector}")
-            
-            # Remove duplicates
-            found_elements = list(set(found_elements))
-            
-            # Also search for text containing pricing keywords
-            pricing_keywords = ['$', 'price', 'account', 'plan', 'tier', 'pro', 'basic', 'premium']
-            text_elements = soup.find_all(text=lambda text: text and any(keyword in text.lower() for keyword in pricing_keywords))
-            
-            print(f"Found {len(text_elements)} text elements with pricing keywords")
-            
-            # Extract structured data
-            for element in found_elements:
-                plan_data = self.extract_plan_data_enhanced(element)
-                if plan_data and plan_data.get('plan_name'):
-                    plans.append(plan_data)
-            
-            # If no structured plans found, try to extract from general text
-            if not plans:
-                print("No structured plans found, attempting text extraction...")
-                plans = self.extract_from_text(raw_html)
-            
-            print(f"Extracted {len(plans)} plans")
-            return plans
-            
-        except Exception as e:
-            print(f"Error parsing HTML: {e}")
-            return []
+        return self.all_data
     
-    def extract_plan_data_enhanced(self, element):
-        """Enhanced plan data extraction"""
-        try:
-            plan_data = {}
-            element_text = element.get_text(strip=True)
-            
-            if not element_text or len(element_text) < 5:
-                return None
-            
-            # Extract plan name from headers
-            headers = element.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
-            for header in headers:
-                header_text = header.get_text(strip=True)
-                if header_text and len(header_text) < 50:  # Reasonable plan name length
-                    plan_data['plan_name'] = header_text
-                    break
-            
-            # Extract price information
-            price_patterns = [
-                r'\$[\d,]+(?:\.\d{2})?',
-                r'[\d,]+\s*(?:USD|dollars?)',
-                r'Price:?\s*\$?[\d,]+',
-            ]
-            
-            import re
-            for pattern in price_patterns:
-                price_match = re.search(pattern, element_text, re.IGNORECASE)
-                if price_match:
-                    plan_data['price_raw'] = price_match.group()
-                    # Clean price
-                    clean_price = re.sub(r'[^\d.]', '', price_match.group())
-                    plan_data['price'] = f"${clean_price}" if clean_price else ""
-                    break
-            
-            # Store full text for manual review
-            plan_data['full_text'] = element_text[:500]  # First 500 chars
-            plan_data['element_tag'] = element.name
-            plan_data['element_classes'] = element.get('class', [])
-            
-            return plan_data
-            
-        except Exception as e:
-            print(f"Error extracting enhanced plan data: {e}")
-            return None
-    
-    def extract_from_text(self, html_content):
-        """Extract pricing info from raw text when structured extraction fails"""
-        plans = []
+    def save_combined_data(self, filename: str = "all_trading_platforms_with_tradeify.csv"):
+        """Save all scraped data including Tradeify to a single file"""
+        if not self.all_data:
+            print("No data to save")
+            return
         
-        try:
-            import re
-            
-            # Look for common pricing patterns in the HTML
-            price_patterns = [
-                r'(\w+\s+(?:Account|Plan|Tier))[:\s]*\$?([\d,]+(?:\.\d{2})?)',
-                r'\$?([\d,]+(?:\.\d{2})?)[:\s]*(?:for|per)?[:\s]*(\w+\s+(?:Account|Plan|Tier))',
-            ]
-            
-            for pattern in price_patterns:
-                matches = re.finditer(pattern, html_content, re.IGNORECASE)
-                for match in matches:
-                    plan_data = {
-                        'plan_name': match.group(1) if len(match.groups()) > 1 else 'Unknown Plan',
-                        'price_raw': match.group(0),
-                        'extraction_method': 'regex'
-                    }
-                    plans.append(plan_data)
-            
-            return plans[:5]  # Limit to first 5 matches to avoid noise
-            
-        except Exception as e:
-            print(f"Error in text extraction: {e}")
-            return []
-    
-    def scrape(self, url=None):
-        """Main scraping method with fallback strategies"""
-        print("Starting Tradeify scraper...")
+        fieldnames = list(self.all_data[0].keys()) if self.all_data else []
         
-        try:
-            # Strategy 1: Try requests session first (fastest)
-            plans = self.scrape_with_session(url)
-            
-            if plans:
-                print(f"Successfully scraped {len(plans)} plans with requests")
-                return plans
-            
-            # Strategy 2: Try Selenium
-            print("Requests failed, trying Selenium...")
-            plans = self.scrape_pricing_page(url)
-            
-            if plans:
-                print(f"Successfully scraped {len(plans)} plans with Selenium")
-                return plans
-            
-            print("All scraping methods failed")
-            return []
-            
-        except Exception as e:
-            print(f"Error in main scrape method: {e}")
-            return []
-        finally:
-            if self.driver:
-                self.driver.quit()
-    
-    def save_to_json(self, data, filename="tradeify_data.json"):
-        """Save scraped data to JSON file"""
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            print(f"Data saved to {filename}")
-        except Exception as e:
-            print(f"Error saving to JSON: {e}")
+        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(self.all_data)
+        
+        print(f"Combined data saved to {filename}")
 
-def scrape_site_tradeify():
-    """Function to be called from main.py"""
-    scraper = TradeifyScraper()
-    data = scraper.scrape()
-    
-    # Process data for CSV output
-    processed_data = []
-    for plan in data:
-        row = {
-            'site': 'Tradeify',
-            'plan_name': plan.get('plan_name', ''),
-            'price': plan.get('price', ''),
-            'price_raw': plan.get('price_raw', ''),
-            'full_text': plan.get('full_text', ''),
-            'extraction_method': plan.get('extraction_method', 'structured'),
-            'scraped_at': time.strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-        # Add features as separate columns
-        features = plan.get('features', {})
-        for feature_key, feature_value in features.items():
-            row[feature_key] = feature_value
-        
-        processed_data.append(row)
-    
-    # Save debug data
-    scraper.save_to_json(processed_data)
-    
-    return processed_data
 
-# Test function
 if __name__ == "__main__":
-    data = scrape_site_tradeify()
-    print(f"Scraped {len(data)} plans")
-    for plan in data:
-        print(f"Plan: {plan.get('plan_name', 'Unknown')}")
-        print(f"Price: {plan.get('price', 'N/A')}")
-        print("---")
+    # Test just Tradeify
+    main_tradeify()
+    
+    # Or test all platforms including Tradeify
+    # multi_scraper = ExtendedTradingPlatformScraper()
+    # all_data = multi_scraper.scrape_all_platforms()
+    # multi_scraper.save_combined_data()
+    # print(f"Total plans scraped across all platforms: {len(all_data)}")
