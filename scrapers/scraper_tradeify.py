@@ -12,7 +12,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 class TradeifyScraper:
     def __init__(self):
-        self.base_url = "https://tradeify.com"
+        self.base_url = "https://tradeify.co/"
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
@@ -34,7 +34,7 @@ class TradeifyScraper:
     def scrape_pricing_page(self, url=None):
         """Scrape the pricing page for account plans"""
         if not url:
-            url = f"{self.base_url}/pricing"  # Adjust URL as needed
+            url = f"{self.base_url}/plan"  # Adjust URL as needed
             
         try:
             if not self.driver:
