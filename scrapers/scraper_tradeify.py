@@ -11,7 +11,7 @@ from urllib.parse import urljoin
 from abc import ABC, abstractmethod
 
 # Import the base scraper class (assuming it's in the same file or imported)
-from BaseScraper import BaseScraper, TradingPlan
+from .BaseScraper import BaseScraper, TradingPlan
 
 class TradeifyScraper(BaseScraper):
     def __init__(self):
