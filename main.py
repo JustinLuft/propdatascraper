@@ -1,6 +1,6 @@
 import pandas as pd
-from scrapers.scraper_tradeify import TradeifyScraper  # Import the function directly
-from scrapers.scraper_apex import ApexTraderFundingScraper # Import the wrapper function
+from scrapers.scraper_tradeify import TradeifyScraper  # Import the class
+from scrapers.scraper_apex import ApexTraderFundingScraper  # Import the class
 
 def main():
     try:
@@ -8,25 +8,37 @@ def main():
         
         # Run Tradeify scraper
         print("Starting Tradeify scraper...")
-        data_tradeify = scrape_site_tradeify()
-        if data_tradeify:
-            # Add source identifier to Tradeify data if not already present
-            for record in data_tradeify:
-                if 'source' not in record:
-                    record['source'] = 'Tradeify'
-            all_data.extend(data_tradeify)
-            print(f"Tradeify: Successfully scraped {len(data_tradeify)} records")
-        else:
-            print("Tradeify: No data scraped")
+        try:
+            tradeify_scraper = TradeifyScraper()  # Create instance of the class
+            tradeify_plans = tradeify_scraper.scrape_all()  # Call the scrape method
+            data_tradeify = tradeify_scraper.get_standardized_data()  # Get standardized data
+            
+            if data_tradeify:
+                # Add source identifier to Tradeify data if not already present
+                for record in data_tradeify:
+                    if 'source' not in record:
+                        record['source'] = 'Tradeify'
+                all_data.extend(data_tradeify)
+                print(f"Tradeify: Successfully scraped {len(data_tradeify)} records")
+            else:
+                print("Tradeify: No data scraped")
+        except Exception as e:
+            print(f"Error with Tradeify scraper: {e}")
         
         # Run Apex Trader Funding scraper
         print("\nStarting Apex Trader Funding scraper...")
-        data_apex = scrape_site_apex()
-        if data_apex:
-            all_data.extend(data_apex)
-            print(f"Apex Trader Funding: Successfully scraped {len(data_apex)} records")
-        else:
-            print("Apex Trader Funding: No data scraped")
+        try:
+            apex_scraper = ApexTraderFundingScraper()  # Create instance of the class
+            apex_plans = apex_scraper.scrape_all()  # Call the scrape method
+            data_apex = apex_scraper.get_standardized_data()  # Get standardized data
+            
+            if data_apex:
+                all_data.extend(data_apex)
+                print(f"Apex Trader Funding: Successfully scraped {len(data_apex)} records")
+            else:
+                print("Apex Trader Funding: No data scraped")
+        except Exception as e:
+            print(f"Error with Apex scraper: {e}")
         
         if not all_data:
             print("No data was scraped from any source. Please check the scraper configurations.")
@@ -58,7 +70,7 @@ def main():
         print("Make sure the scrapers directory exists and contains the required scraper files")
         print("Required files:")
         print("  - scrapers/scraper_tradeify.py") 
-        print("  - scrapers/apex_trader_funding_scraper.py")
+        print("  - scrapers/scraper_apex.py")
     except Exception as e:
         print(f"Error in main: {e}")
 
