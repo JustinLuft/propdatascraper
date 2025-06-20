@@ -1,5 +1,5 @@
 import pandas as pd
-from scrapers.scraper_tradeify import scraper_tradeify  # Import the function directly
+from scrapers.scraper_tradeify import TradeifyScraper  # Import the function directly
 from scrapers.scraper_apex import scraper_apex  # Import the wrapper function
 
 def main():
