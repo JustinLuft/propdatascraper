@@ -1,13 +1,9 @@
 import pandas as pd
-from scrapers.scraper_a import scrape_site_a
-from scrapers.scraper_b import scrape_site_b
-from scrapers.scraper_c import scrape_site_c
+from scrapers.scraper_tradeify import TradeifyScraper
 
 def main():
     # Run all scrapers
-    data_a = scrape_site_a()
-    data_b = scrape_site_b()
-    data_c = scrape_site_c()
+    data_a = scrape_site_tradeify()
     
     # Combine data
     all_data = data_a + data_b + data_c
