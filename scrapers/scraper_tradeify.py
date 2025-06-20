@@ -162,7 +162,7 @@ class TradeifyScraper:
     def scrape_with_requests(self, url=None):
         """Alternative scraping method using requests (for static content)"""
         if not url:
-            url = f"{self.base_url}/pricing"
+            url = f"{self.base_url}"
             
         try:
             response = requests.get(url, headers=self.headers)
