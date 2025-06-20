@@ -106,7 +106,7 @@ class ApexTraderFundingScraper:
             # Extract business name
             business_name = self._extract_business_name(soup)
             
-            # Extract pricing plans
+            # Extract pricing plans using the correct selectors
             plans = self._extract_pricing_plans(soup)
             
             # Extract Trustpilot score
@@ -123,7 +123,7 @@ class ApexTraderFundingScraper:
                     sale_price=plan_data.get('sale_price', ''),
                     funded_full_price=plan_data.get('funded_full_price', ''),
                     discount_code=discount_codes,
-                    trial_type=plan_data.get('trial_type', ''),
+                    trial_type=plan_data.get('trial_type', 'Full Account'),
                     trustpilot_score=trustpilot_score,
                     profit_goal=plan_data.get('profit_goal', ''),
                     additional_info=plan_data
@@ -140,17 +140,144 @@ class ApexTraderFundingScraper:
             print(f"Error parsing main page: {e}")
             return self._create_fallback_plans()
 
+    def _extract_pricing_plans(self, soup: BeautifulSoup) -> List[Dict]:
+        """Extract pricing plan information using the actual HTML structure"""
+        plans = []
+        
+        # Look for the specific Swiper slides with pricing items
+        pricing_items = soup.select('.pricing__item.pricing__item--style2')
+        
+        print(f"Found {len(pricing_items)} pricing items")
+        
+        for item in pricing_items:
+            try:
+                plan_data = self._extract_plan_from_pricing_item(item)
+                if plan_data:
+                    plans.append(plan_data)
+                    print(f"Extracted plan: {plan_data.get('account_size', 'Unknown')} - {plan_data.get('sale_price', 'Unknown')}")
+            except Exception as e:
+                print(f"Error extracting plan from item: {e}")
+                continue
+        
+        return plans
+
+    def _extract_plan_from_pricing_item(self, item) -> Dict:
+        """Extract plan information from a pricing item using the exact HTML structure"""
+        plan_data = {}
+        
+        try:
+            # Extract account size from the h3 tag
+            title_element = item.select_one('.pricing__item-top h3')
+            if title_element:
+                title_text = title_element.get_text(strip=True)
+                # Extract account size (e.g., "25K FULL" -> "25K")
+                account_match = re.search(r'(\d+K)', title_text)
+                if account_match:
+                    plan_data['account_size'] = f"${account_match.group(1)}"
+                
+                # Extract plan type
+                if 'FULL' in title_text:
+                    plan_data['trial_type'] = 'Full Account'
+            
+            # Extract starting capital from the h6 tag
+            capital_element = item.select_one('.pricing__item-top h6')
+            if capital_element:
+                capital_text = capital_element.get_text(strip=True)
+                # Extract the actual starting capital amount
+                capital_match = re.search(r'\$([0-9,]+)', capital_text)
+                if capital_match:
+                    plan_data['starting_capital'] = f"${capital_match.group(1)}"
+            
+            # Extract profit goal from the pricing list
+            list_items = item.select('.pricing__list-item')
+            for list_item in list_items:
+                text = list_item.get_text(strip=True)
+                if 'Profit Goal' in text:
+                    # Extract profit goal amount
+                    profit_match = re.search(r'Profit Goal\s+\$([0-9,]+)', text)
+                    if profit_match:
+                        plan_data['profit_goal'] = f"${profit_match.group(1)}"
+                elif 'Contracts' in text:
+                    # Extract contract information
+                    contract_match = re.search(r'Contracts\s+(.+)', text)
+                    if contract_match:
+                        plan_data['contracts'] = contract_match.group(1).strip()
+                elif 'Trailing Threshold' in text:
+                    # Extract trailing threshold
+                    threshold_match = re.search(r'Trailing Threshold\s+\$([0-9,]+)', text)
+                    if threshold_match:
+                        plan_data['trailing_threshold'] = f"${threshold_match.group(1)}"
+            
+            # Extract price from the bottom section
+            price_element = item.select_one('.pricing__item-bottom p')
+            if price_element:
+                price_text = price_element.get_text(strip=True)
+                # Extract monthly price
+                price_match = re.search(r'\$(\d+)/Month', price_text)
+                if price_match:
+                    plan_data['sale_price'] = f"${price_match.group(1)}/Month"
+                    plan_data['monthly_price'] = f"${price_match.group(1)}"
+            
+            # Extract signup link
+            signup_link = item.select_one('.pricing__item-bottom a')
+            if signup_link:
+                href = signup_link.get('href', '')
+                plan_data['signup_link'] = href
+                
+                # Extract plan type from URL if available
+                if 'wealthcharts' in href.lower():
+                    plan_data['platform'] = 'WealthCharts'
+            
+        except Exception as e:
+            print(f"Error extracting from pricing item: {e}")
+        
+        return plan_data
+
     def _create_fallback_plans(self) -> List[TradingPlan]:
-        """Create fallback plans based on known Apex Trader Funding structure"""
-        print("Creating fallback plans based on typical Apex structure...")
+        """Create fallback plans based on the actual HTML structure provided"""
+        print("Creating fallback plans based on actual Apex structure...")
         
         fallback_plans = [
-            {'account_size': '$25K', 'sale_price': '$169', 'profit_goal': '$2,500'},
-            {'account_size': '$50K', 'sale_price': '$269', 'profit_goal': '$5,000'},
-            {'account_size': '$100K', 'sale_price': '$439', 'profit_goal': '$10,000'},
-            {'account_size': '$150K', 'sale_price': '$609', 'profit_goal': '$15,000'},
-            {'account_size': '$250K', 'sale_price': '$969', 'profit_goal': '$25,000'},
-            {'account_size': '$300K', 'sale_price': '$1139', 'profit_goal': '$30,000'},
+            {
+                'account_size': '$25K',
+                'sale_price': '$147/Month',
+                'profit_goal': '$1,500',
+                'starting_capital': '$25,000',
+                'contracts': '4(40 Micros)',
+                'trailing_threshold': '$1,500'
+            },
+            {
+                'account_size': '$50K',
+                'sale_price': '$167/Month',
+                'profit_goal': '$3,000',
+                'starting_capital': '$50,000',
+                'contracts': '10(100 Micros)',
+                'trailing_threshold': '$2,500'
+            },
+            {
+                'account_size': '$100K',
+                'sale_price': '$207/Month',
+                'profit_goal': '$6,000',
+                'starting_capital': '$100,000',
+                'contracts': '14(140 Micros)',
+                'trailing_threshold': '$3,000'
+            },
+            {
+                'account_size': '$150K',
+                'sale_price': '$297/Month',
+                'profit_goal': '$9,000',
+                'starting_capital': '$150,000',
+                'contracts': '17(170 Micros)',
+                'trailing_threshold': '$5,000'
+            },
+            {
+                'account_size': '$250K',
+                'sale_price': '$399/Month',
+                'profit_goal': '$15,000',
+                'starting_capital': '$250,000',
+                'contracts': '27(270 Micros)',
+                'trailing_threshold': '$6,500'
+            }
         ]
         
         for plan_data in fallback_plans:
@@ -160,7 +287,7 @@ class ApexTraderFundingScraper:
                 sale_price=plan_data['sale_price'],
                 funded_full_price="",
                 discount_code="Contact for codes",
-                trial_type="Evaluation",
+                trial_type="Full Account",
                 trustpilot_score="4.5",
                 profit_goal=plan_data['profit_goal'],
                 additional_info=plan_data
@@ -190,114 +317,6 @@ class ApexTraderFundingScraper:
                     return text
         
         return "Apex Trader Funding"
-
-    def _extract_pricing_plans(self, soup: BeautifulSoup) -> List[Dict]:
-        """Extract pricing plan information"""
-        plans = []
-        
-        # Common selectors for pricing sections
-        pricing_selectors = [
-            '.pricing-card',
-            '.plan-card',
-            '.evaluation-card',
-            '.account-card',
-            '.pricing-table tr',
-            '[class*="price"]',
-            '[class*="plan"]',
-            '[class*="account"]'
-        ]
-        
-        for selector in pricing_selectors:
-            cards = soup.select(selector)
-            for card in cards:
-                plan_data = self._extract_plan_from_card(card)
-                if plan_data and plan_data.get('account_size'):
-                    plans.append(plan_data)
-        
-        # If no plans found through selectors, try text parsing
-        if not plans:
-            plans = self._extract_plans_from_text(soup)
-        
-        return plans
-
-    def _extract_plan_from_card(self, card) -> Dict:
-        """Extract plan information from a single card element"""
-        plan_data = {}
-        
-        text = card.get_text()
-        
-        # Extract account size
-        account_size_patterns = [
-            r'(\$?\d+[kK](?:\s*(?:FULL|FUNDED|ACCOUNT))?)',
-            r'(\$\d{2,3},\d{3})',
-            r'(\d+K)',
-        ]
-        
-        for pattern in account_size_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                plan_data['account_size'] = match.group(1)
-                break
-        
-        # Extract prices
-        price_patterns = [
-            r'\$(\d+(?:,\d{3})*(?:\.\d{2})?)',
-            r'(\d+)/month',
-            r'Starting.*\$(\d+)',
-        ]
-        
-        prices = []
-        for pattern in price_patterns:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            prices.extend(matches)
-        
-        if prices:
-            plan_data['sale_price'] = f"${prices[0]}" if prices else ""
-            plan_data['funded_full_price'] = f"${prices[-1]}" if len(prices) > 1 else ""
-        
-        # Extract profit goal
-        profit_patterns = [
-            r'Profit Goal.*\$(\d+(?:,\d{3})*)',
-            r'Goal.*\$(\d+(?:,\d{3})*)',
-            r'\$(\d+(?:,\d{3})*)\s*profit'
-        ]
-        
-        for pattern in profit_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                plan_data['profit_goal'] = f"${match.group(1)}"
-                break
-        
-        # Extract trial type
-        if 'evaluation' in text.lower():
-            plan_data['trial_type'] = 'Evaluation'
-        elif 'funded' in text.lower():
-            plan_data['trial_type'] = 'Funded'
-        elif 'reset' in text.lower():
-            plan_data['trial_type'] = 'Reset'
-        
-        return plan_data
-
-    def _extract_plans_from_text(self, soup: BeautifulSoup) -> List[Dict]:
-        """Extract plans by parsing text content directly"""
-        plans = []
-        text = soup.get_text()
-        
-        # Based on your screenshot, look for common patterns
-        account_sizes = ['25K', '50K', '100K', '150K', '250K', '300K']
-        
-        for size in account_sizes:
-            if size in text:
-                plan = {
-                    'account_size': size,
-                    'trial_type': 'Evaluation',
-                    'sale_price': '',
-                    'funded_full_price': '',
-                    'profit_goal': ''
-                }
-                plans.append(plan)
-        
-        return plans
 
     def _extract_trustpilot_score(self, soup: BeautifulSoup) -> str:
         """Extract Trustpilot score"""
@@ -405,7 +424,7 @@ class ApexTraderFundingScraper:
             sale_price=new_plan_data.get('sale_price', ''),
             funded_full_price=new_plan_data.get('funded_full_price', ''),
             discount_code="Contact for codes",
-            trial_type=new_plan_data.get('trial_type', ''),
+            trial_type=new_plan_data.get('trial_type', 'Full Account'),
             trustpilot_score="4.5",
             profit_goal=new_plan_data.get('profit_goal', ''),
             additional_info=new_plan_data
@@ -420,7 +439,8 @@ class ApexTraderFundingScraper:
         
         fieldnames = [
             'business_name', 'account_size', 'sale_price', 'funded_full_price',
-            'discount_code', 'trial_type', 'trustpilot_score', 'profit_goal'
+            'discount_code', 'trial_type', 'trustpilot_score', 'profit_goal',
+            'starting_capital', 'contracts', 'trailing_threshold'
         ]
         
         with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
@@ -428,6 +448,7 @@ class ApexTraderFundingScraper:
             writer.writeheader()
             
             for plan in self.plans:
+                additional = plan.additional_info or {}
                 writer.writerow({
                     'business_name': plan.business_name,
                     'account_size': plan.account_size,
@@ -436,7 +457,10 @@ class ApexTraderFundingScraper:
                     'discount_code': plan.discount_code,
                     'trial_type': plan.trial_type,
                     'trustpilot_score': plan.trustpilot_score,
-                    'profit_goal': plan.profit_goal
+                    'profit_goal': plan.profit_goal,
+                    'starting_capital': additional.get('starting_capital', ''),
+                    'contracts': additional.get('contracts', ''),
+                    'trailing_threshold': additional.get('trailing_threshold', '')
                 })
         
         print(f"Data saved to {filename}")
@@ -486,6 +510,11 @@ class ApexTraderFundingScraper:
             print(f"  Trial Type: {plan.trial_type}")
             print(f"  Trustpilot Score: {plan.trustpilot_score}")
             print(f"  Profit Goal: {plan.profit_goal}")
+            if plan.additional_info:
+                print(f"  Additional Info:")
+                for key, value in plan.additional_info.items():
+                    if key not in ['account_size', 'sale_price', 'profit_goal']:
+                        print(f"    {key}: {value}")
             print("-" * 40)
 
     def get_standardized_data(self) -> List[Dict]:
@@ -525,3 +554,12 @@ def scrape_site_apex():
     except Exception as e:
         print(f"Error scraping Apex Trader Funding: {e}")
         return []
+
+
+# Test the scraper
+if __name__ == "__main__":
+    scraper = ApexTraderFundingScraper()
+    plans = scraper.scrape_main_page()
+    scraper.print_results()
+    scraper.save_to_csv()
+    scraper.save_to_json()
