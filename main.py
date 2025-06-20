@@ -29,7 +29,13 @@ def main():
         print("\nStarting Apex Trader Funding scraper...")
         try:
             apex_scraper = ApexTraderFundingScraper()  # Create instance of the class
-            apex_plans = apex_scraper.scrape_all()  # Call the scrape method
+            # Use the correct method name - scrape_main_page() instead of scrape_all()
+            apex_plans = apex_scraper.scrape_main_page()  # Call the correct scrape method
+            
+            # Also try to scrape additional pages for more comprehensive data
+            if apex_plans:
+                apex_scraper.scrape_additional_pages()
+            
             data_apex = apex_scraper.get_standardized_data()  # Get standardized data
             
             if data_apex:
