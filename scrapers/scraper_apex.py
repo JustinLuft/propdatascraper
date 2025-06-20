@@ -390,3 +390,38 @@ class ApexTraderFundingScraper:
             print(f"  Trustpilot Score: {plan.trustpilot_score}")
             print(f"  Profit Goal: {plan.profit_goal}")
             print("-" * 40)
+
+    def get_standardized_data(self) -> List[Dict]:
+        """Return data in standardized format for combining with other scrapers"""
+        standardized_data = []
+        for plan in self.plans:
+            standardized_data.append({
+                'business_name': plan.business_name,
+                'plan_name': f"{plan.account_size} Account",
+                'account_size': plan.account_size,
+                'price_raw': plan.sale_price,
+                'funded_price': plan.funded_full_price,
+                'discount_code': plan.discount_code,
+                'trial_type': plan.trial_type,
+                'trustpilot_score': plan.trustpilot_score,
+                'profit_goal': plan.profit_goal,
+                'source': 'Apex Trader Funding'
+            })
+        return standardized_data
+
+
+def scrape_site_apex():
+    """Main wrapper function to scrape Apex Trader Funding and return standardized data"""
+    try:
+        scraper = ApexTraderFundingScraper()
+        plans = scraper.scrape_main_page()
+        scraper.scrape_additional_pages()  # Get additional data if available
+        
+        # Return standardized data
+        standardized_data = scraper.get_standardized_data()
+        print(f"Apex Trader Funding: Scraped {len(standardized_data)} plans")
+        return standardized_data
+        
+    except Exception as e:
+        print(f"Error scraping Apex Trader Funding: {e}")
+        return []
