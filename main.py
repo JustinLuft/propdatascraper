@@ -1,6 +1,6 @@
 import pandas as pd
 from scrapers.scraper_tradeify import TradeifyScraper  # Import the function directly
-from scrapers.scraper_apex import ApexFundingScraper # Import the wrapper function
+from scrapers.scraper_apex import ApexTraderFundingScraper # Import the wrapper function
 
 def main():
     try:
