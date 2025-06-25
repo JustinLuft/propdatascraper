@@ -1,6 +1,7 @@
 import pandas as pd
 from scrapers.scraper_tradeify import TradeifyScraper  # Import the class
 from scrapers.scraper_apex import ApexTraderFundingScraper  # Import the class
+from scrapers.scraper_myfundedfuture import MyFundedFuturesScraper  # Import the class
 
 def main():
     try:
@@ -46,6 +47,26 @@ def main():
         except Exception as e:
             print(f"Error with Apex scraper: {e}")
         
+        # Run My Funded Futures scraper
+        print("\nStarting My Funded Futures scraper...")
+        try:
+            mff_scraper = MyFundedFuturesScraper()  # Create instance of the class
+            mff_plans = mff_scraper.scrape_main_page()  # Call the scrape method
+            
+            # Also try to scrape additional pages for more comprehensive data
+            if mff_plans:
+                mff_scraper.scrape_additional_pages()
+            
+            data_mff = mff_scraper.get_standardized_data()  # Get standardized data
+            
+            if data_mff:
+                all_data.extend(data_mff)
+                print(f"My Funded Futures: Successfully scraped {len(data_mff)} records")
+            else:
+                print("My Funded Futures: No data scraped")
+        except Exception as e:
+            print(f"Error with My Funded Futures scraper: {e}")
+        
         if not all_data:
             print("No data was scraped from any source. Please check the scraper configurations.")
             return
@@ -77,6 +98,7 @@ def main():
         print("Required files:")
         print("  - scrapers/scraper_tradeify.py") 
         print("  - scrapers/scraper_apex.py")
+        print("  - scrapers/scraper_myfundedfuture.py")
     except Exception as e:
         print(f"Error in main: {e}")
 
