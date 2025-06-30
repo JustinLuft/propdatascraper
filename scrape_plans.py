@@ -41,7 +41,9 @@ json_config = JsonConfig(
 # List of URLs to scrape
 urls = [
     "https://tradeify.co/plan",
-    "https://apextraderfunding.com/",   # Add more URLs here
+    "https://apextraderfunding.com/",
+    "https://myfundedfutures.com/",
+    "https://thelegendstrading.com/",# Add more URLs here
     # "https://anotherwebsite.com/plans",
 ]
 
