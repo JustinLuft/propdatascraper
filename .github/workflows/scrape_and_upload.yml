@@ -2,8 +2,6 @@ name: Scrape Plans and Upload CSV
 
 on:
   workflow_dispatch: # Allows manual trigger from GitHub UI
-  schedule:
-    - cron: '0 8 * * *' # Optional: runs daily at 8:00 UTC
 
 jobs:
   scrape_and_commit:
