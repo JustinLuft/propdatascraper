@@ -7,7 +7,11 @@ from typing import List
 import pandas as pd
 
 # Initialize Firecrawl
-app = FirecrawlApp(api_key="fc-2cdcb9a4e78d4e3b9a56749f41c776db")
+import os
+
+api_key = os.getenv("FIRECRAWL_API_KEY")
+app = FirecrawlApp(api_key=api_key)
+
 
 # Define the schema for each plan
 class Plan(BaseModel):
