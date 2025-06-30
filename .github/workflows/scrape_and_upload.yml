@@ -11,7 +11,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          persist-credentials: false # Important to prevent automatic token use
+          persist-credentials: true   # default true, ensures token available for pushes
 
       - name: Set up Python
         uses: actions/setup-python@v4
