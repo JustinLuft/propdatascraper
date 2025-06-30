@@ -1,0 +1,32 @@
+plan_name,account_type,account_size,price_raw,profit_goal,trailing_drawdown,daily_loss_limit,activation_fee,reset_fee,drawdown_mode,business_name,discount_code,trustpilot_score,source_url
+$50k account,Advanced,$50k,$69 per month,"$3,000","$2,000",None,$125,$45,Intraday,Tradeify,JUNE,,https://tradeify.co/plan
+$100k account,Advanced,$100k,$109 per month,"$6,000","$3,000",None,$125,$69,Intraday,Tradeify,JUNE,,https://tradeify.co/plan
+$150k account,Advanced,$150k,$129 per month,"$9,000","$4,500",None,$125,$79,Intraday,Tradeify,JUNE,,https://tradeify.co/plan
+$50k account,Growth,$50k,$139 per month,"$3,000","$2,000","$1,250",$0,$85,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+$100k account,Growth,$100k,$249 per month,"$6,000","$3,500","$2,500",$0,$169,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+$150k account,Growth,$150k,$339 per month,"$9,000","$5,000","$3,750",$0,$197,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+$25k account,Straight to Sim Funded,$25k,$349 one time fee,,"$1,000",None,,,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+$50k account,Straight to Sim Funded,$50k,$509 one time fee,,"$2,000","$1,250",,,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+$100k account,Straight to Sim Funded,$100k,$629 one time fee,,"$4,000","$2,500",,,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+$150k account,Straight to Sim Funded,$150k,$729 one time fee,,"$6,000","$3,750",,,End Of Day,Tradeify,JUNE,,https://tradeify.co/plan
+25K FULL,WealthCharts,"$25,000",$147/Month,"$1,500","$1,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+50K FULL,WealthCharts,"$50,000",$167/Month,"$3,000","$2,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+100K FULL,WealthCharts,"$100,000",$297/Month,"$6,000","$3,000",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+150K FULL,WealthCharts,"$150,000",$397/Month,"$9,000","$5,000",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+250K FULL,WealthCharts,"$250,000",$497/Month,"$15,000","$6,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+300K FULL,WealthCharts,"$300,000",$597/Month,"$20,000","$7,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+100K STATIC,WealthCharts,"$100,000",$137/Month,"$2,000",None,$625,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+25K FULL,Rithmic,"$25,000",$157/Month,"$1,500","$1,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+50K FULL,Rithmic,"$50,000",$177/Month,"$3,000","$2,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+100K FULL,Rithmic,"$100,000",$297/Month,"$6,000","$3,000",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+150K FULL,Rithmic,"$150,000",$397/Month,"$9,000","$5,000",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+250K FULL,Rithmic,"$250,000",$497/Month,"$15,000","$6,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+300K FULL,Rithmic,"$300,000",$597/Month,"$20,000","$7,500",None,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+100K STATIC,Rithmic,"$100,000",$147/Month,"$2,000",None,$625,Included,$80/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+25K FULL,Tradovate,"$25,000",$167/Month,"$1,500","$1,500",None,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+50K FULL,Tradovate,"$50,000",$187/Month,"$3,000","$2,500",None,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+100K FULL,Tradovate,"$100,000",$297/Month,"$6,000","$3,000",None,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+150K FULL,Tradovate,"$150,000",$397/Month,"$9,000","$5,000",None,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+250K FULL,Tradovate,"$250,000",$497/Month,"$15,000","$6,500",None,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+300K FULL,Tradovate,"$300,000",$597/Month,"$20,000","$7,500",None,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
+100K STATIC,Tradovate,"$100,000",$157/Month,"$2,000",None,$625,Included,$100/Reset/No Limit,None,Apex Trader Funding,80% Off Evals,N/A,https://apextraderfunding.com/
