@@ -27,39 +27,75 @@ def get_trustpilot_score(source_url: str, app) -> str:
         
         html_content = search_page.html
         
-        # Step 2: Look for the first rating in search results
-        # Pattern matches: "4.8 • 635 reviews" format from your screenshot
-        rating_pattern = r'(\d\.\d)\s*•\s*\d+\s*reviews?'
-        matches = re.findall(rating_pattern, html_content, re.IGNORECASE)
+        # Debug: Print some of the HTML to see what we're working with
+        print(f"📝 HTML snippet: {html_content[:500]}...")
         
-        if matches:
-            # Return the first (top) result's rating
-            score = matches[0]
-            print(f"✅ {domain} score: {score}")
-            return score
+        # Enhanced rating patterns to catch more variations
+        rating_patterns = [
+            # Main pattern with bullet and comma support: "4.8 • 34,148 reviews"
+            r'(\d\.\d)\s*•\s*[\d,]+\s*reviews?',
+            # Pattern with different separators and comma support
+            r'(\d\.\d)\s*[-–—]\s*[\d,]+\s*reviews?',
+            r'(\d\.\d)\s*\|\s*[\d,]+\s*reviews?',
+            # More flexible pattern with comma support
+            r'(\d\.\d)\s*[•\-–—\|]?\s*[\d,]+\s*reviews?',
+            # Pattern specifically for the format: "4.8 • 635 reviews" or "2.5 • 34,148 reviews"
+            r'(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
+            # Backup patterns without comma requirement
+            r'(\d\.\d)\s*•\s*\d+\s*reviews?',
+            r'(\d\.\d)\s*[•·]\s*\d+\s*reviews?'
+        ]
         
-        # Fallback: Look for other rating patterns in search results
+        for i, pattern in enumerate(rating_patterns):
+            matches = re.findall(pattern, html_content, re.IGNORECASE | re.DOTALL)
+            if matches:
+                # Extract just the rating (first capture group)
+                if isinstance(matches[0], tuple):
+                    score = matches[0][0]  # First element of tuple
+                else:
+                    score = matches[0]
+                print(f"✅ {domain} score found with pattern {i+1}: {score}")
+                return score
+        
+        # Additional fallback patterns
         fallback_patterns = [
             r'(\d\.\d)\s*out\s*of\s*5',
             r'rating["\s]*:\s*["\s]*(\d\.\d)',
-            r'(\d\.\d)\s*stars?'
+            r'(\d\.\d)\s*stars?',
+            # Look for JSON-like data
+            r'"rating":\s*"?(\d\.\d)"?',
+            r'"score":\s*"?(\d\.\d)"?',
+            # Look for microdata
+            r'ratingValue["\s]*:\s*["\s]*(\d\.\d)',
+            # Very broad search for any decimal rating
+            r'(?:rating|score|stars?).*?(\d\.\d)',
         ]
         
-        for pattern in fallback_patterns:
-            matches = re.findall(pattern, html_content.lower())
+        print(f"🔄 Trying fallback patterns...")
+        for i, pattern in enumerate(fallback_patterns):
+            matches = re.findall(pattern, html_content, re.IGNORECASE)
             if matches:
                 score = matches[0]
-                print(f"✅ {domain} score (fallback): {score}")
+                print(f"✅ {domain} score (fallback {i+1}): {score}")
                 return score
         
         print(f"❌ No rating found for: {domain}")
+        
+        # Debug: Let's see if "reviews" appears at all
+        if "reviews" in html_content.lower():
+            print(f"🔍 Found 'reviews' in content, but couldn't match rating pattern")
+            # Try to find any number followed by "reviews"
+            review_matches = re.findall(r'(\d+)\s*reviews?', html_content, re.IGNORECASE)
+            if review_matches:
+                print(f"📊 Found review counts: {review_matches[:3]}")  # Show first 3
+        
         return "Not found"
         
     except Exception as e:
         print(f"⚠️ Error for {source_url}: {e}")
         return "Error"
 
-# Main execution code
+# Main execution code remains the same
 import pandas as pd
 import os
 
