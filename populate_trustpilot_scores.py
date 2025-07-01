@@ -2,7 +2,7 @@ import urllib.parse
 import re
 from urllib.parse import urlparse
 
-def get_trustpilot_score(source_url: str) -> str:
+def get_trustpilot_score(source_url: str, app) -> str:
     try:
         # Extract domain from source URL
         parsed_url = urlparse(source_url)
@@ -63,7 +63,7 @@ def get_trustpilot_score(source_url: str) -> str:
 import pandas as pd
 import os
 
-def populate_trustpilot_scores():
+def populate_trustpilot_scores(app):
     # Find CSV file (adjust filename as needed)
     csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
     if not csv_files:
@@ -123,7 +123,7 @@ def populate_trustpilot_scores():
             print(f"♻️ Using cached score for {domain}: {score}")
         else:
             # Get Trustpilot score (first time for this domain)
-            score = get_trustpilot_score(source_url)
+            score = get_trustpilot_score(source_url, app)
             domain_scores[domain] = score  # Cache the result
         
         # Always update the dataframe (even if score was cached)
@@ -137,9 +137,11 @@ def populate_trustpilot_scores():
     print(f"\n✅ Completed! Updated {updated_count} rows in {csv_file}")
 
 if __name__ == "__main__":
-    # You need to initialize the 'app' object here
-    # This should be your Firecrawl app instance
-    # Example: app = FirecrawlApp(api_key="your_api_key")
+    # Initialize the Firecrawl app
+    from firecrawl import FirecrawlApp
+    import os
+    
+    app = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
     
     print("🚀 Starting Trustpilot score population...")
-    populate_trustpilot_scores()
+    populate_trustpilot_scores(app)
