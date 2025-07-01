@@ -2,8 +2,6 @@ name: Populate Trustpilot Scores
 
 on:
   workflow_dispatch:  # Manual trigger
-  schedule:
-    - cron: '0 14 * * *'  # Runs daily at 2 PM UTC
 
 jobs:
   run-script:
