@@ -1,0 +1,37 @@
+name: Populate Trustpilot Scores
+
+on:
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '0 14 * * *'  # Runs daily at 2 PM UTC
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    env:
+      FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas firecrawl pydantic
+
+      - name: Run Trustpilot script
+        run: python populate_trustpilot_scores.py
+
+      - name: Commit and push updated CSV
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add plans_output_with_scores.csv
+          git commit -m "✅ Auto-update: Trustpilot scores refreshed" || echo "No changes to commit"
+          git push
