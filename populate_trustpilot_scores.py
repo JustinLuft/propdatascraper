@@ -20,15 +20,16 @@ def get_trustpilot_score(business_name: str) -> str:
         encoded_name = urllib.parse.quote(business_name)
         search_url = f"https://www.trustpilot.com/search?query={encoded_name}"
 
-        # Scrape the search results page
+        # Firecrawl scrape
         page = app.scrape_url(
             url=search_url,
-            formats=["text"],
+            formats=["html"],  # ✅ use a valid format
             only_main_content=False,
             timeout=90000
         )
 
-        text = page.text.lower()
+        # Parse the score
+        text = page.html.lower()  # ✅ use the correct field
         match = re.search(r"(\d\.\d)\s*out of\s*5", text)
 
         if match:
@@ -42,6 +43,7 @@ def get_trustpilot_score(business_name: str) -> str:
     except Exception as e:
         print(f"⚠️ Error for {business_name}: {e}")
         return "Error"
+
 
 # Get unique business names and fetch scores
 unique_names = df["business_name"].dropna().unique()
