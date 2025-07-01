@@ -1,8 +1,13 @@
 import urllib.parse
 import re
 from urllib.parse import urlparse
+import requests
+from bs4 import BeautifulSoup
+import time
+import pandas as pd
+import os
 
-def get_trustpilot_score(source_url: str, app, max_retries: int = 3) -> str:
+def get_trustpilot_score(source_url: str, max_retries: int = 3) -> str:
     for attempt in range(max_retries):
         try:
             # Extract domain from source URL
@@ -14,128 +19,148 @@ def get_trustpilot_score(source_url: str, app, max_retries: int = 3) -> str:
             
             print(f"🔍 Searching Trustpilot for domain: {domain} (attempt {attempt + 1}/{max_retries})")
             
-            # Search Trustpilot using the domain
+            # Try direct Trustpilot review page first
+            direct_url = f"https://www.trustpilot.com/review/{domain}"
+            
+            # Set up headers to avoid being blocked
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Accept-Encoding': 'gzip, deflate',
+                'Connection': 'keep-alive',
+            }
+            
+            # Add delay to avoid rate limiting
+            if attempt > 0:
+                time.sleep(5)
+            else:
+                time.sleep(2)
+            
+            # First try direct URL
+            print(f"🎯 Trying direct URL: {direct_url}")
+            response = requests.get(direct_url, headers=headers, timeout=30)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Look for rating in various places
+                rating_selectors = [
+                    # Common Trustpilot rating selectors
+                    '[data-rating]',
+                    '.star-rating',
+                    '[class*="star-rating"]',
+                    '[class*="rating"]',
+                    '.trustScore',
+                    '[data-testid*="rating"]',
+                    # Text-based patterns
+                    'span:contains("out of")',
+                    'div:contains("out of")',
+                ]
+                
+                # Try to find rating using CSS selectors
+                for selector in rating_selectors:
+                    elements = soup.select(selector)
+                    for element in elements:
+                        # Check data attributes
+                        if element.get('data-rating'):
+                            score = element.get('data-rating')
+                            print(f"✅ Found rating via data-rating: {score}")
+                            return score
+                        
+                        # Check text content
+                        text = element.get_text(strip=True)
+                        rating_match = re.search(r'(\d\.\d)', text)
+                        if rating_match:
+                            score = rating_match.group(1)
+                            print(f"✅ Found rating in text: {score}")
+                            return score
+                
+                # Search the entire page content for rating patterns
+                page_text = soup.get_text()
+                
+                # Enhanced rating patterns
+                rating_patterns = [
+                    r'(\d\.\d)\s*out\s*of\s*5',
+                    r'(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
+                    r'(\d\.\d)\s*[-–—]\s*[\d,]+\s*reviews?',
+                    r'TrustScore[^\d]*(\d\.\d)',
+                    r'Rating[^\d]*(\d\.\d)',
+                    r'(\d\.\d)\s*stars?',
+                    r'score[^\d]*(\d\.\d)',
+                ]
+                
+                for pattern in rating_patterns:
+                    matches = re.findall(pattern, page_text, re.IGNORECASE)
+                    if matches:
+                        score = matches[0]
+                        print(f"✅ Found rating with pattern: {score}")
+                        return score
+                
+                print(f"🔍 Direct URL found page but no rating extracted")
+            
+            # If direct URL fails, try search
+            print(f"🔄 Trying search approach...")
             query = urllib.parse.quote(domain)
             search_url = f"https://www.trustpilot.com/search?query={query}"
             
-            # Add a small delay to avoid rate limiting
-            import time
-            if attempt > 0:  # Only delay on retries
-                time.sleep(5)  # 5 second delay on retries
-            else:
-                time.sleep(2)  # 2 second delay on first attempt
+            response = requests.get(search_url, headers=headers, timeout=30)
             
-            # Step 1: Scrape the search results page
-            search_page = app.scrape_url(
-                url=search_url,
-                formats=["html"],
-                only_main_content=False,
-                timeout=90000
-            )
+            if response.status_code != 200:
+                print(f"❌ HTTP {response.status_code} for search URL")
+                continue
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            page_text = soup.get_text()
+            
+            print(f"📝 Search page loaded, looking for ratings...")
+            
+            # Search page patterns - look for ratings near the domain name
+            search_patterns = [
+                # Look for domain followed by rating
+                rf'{re.escape(domain)}.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
+                rf'{re.escape(domain)}.*?(\d\.\d)\s*out\s*of\s*5',
+                # General rating patterns
+                r'(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
+                r'(\d\.\d)\s*out\s*of\s*5',
+                r'(\d\.\d)\s*[-–—]\s*[\d,]+\s*reviews?',
+            ]
+            
+            for i, pattern in enumerate(search_patterns):
+                matches = re.findall(pattern, page_text, re.IGNORECASE | re.DOTALL)
+                if matches:
+                    score = matches[0] if isinstance(matches[0], str) else matches[0]
+                    print(f"✅ Found rating via search pattern {i+1}: {score}")
+                    return score
+            
+            # Look for any links to review pages and extract from those
+            review_links = soup.find_all('a', href=re.compile(r'/review/'))
+            for link in review_links[:3]:  # Check first 3 links
+                href = link.get('href')
+                if domain.lower() in href.lower():
+                    print(f"🔗 Found specific review link: {href}")
+                    # Extract rating from the link text or nearby elements
+                    link_text = link.get_text()
+                    rating_match = re.search(r'(\d\.\d)', link_text)
+                    if rating_match:
+                        score = rating_match.group(1)
+                        print(f"✅ Found rating in link text: {score}")
+                        return score
+            
+            print(f"❌ No rating found for: {domain}")
+            
+        except requests.RequestException as e:
+            print(f"⚠️ Request error for {source_url} (attempt {attempt + 1}): {e}")
+        except Exception as e:
+            print(f"⚠️ Error for {source_url} (attempt {attempt + 1}): {e}")
         
-        html_content = search_page.html
-        
-        # Debug: Print some of the HTML to see what we're working with
-        print(f"📝 HTML snippet: {html_content[:500]}...")
-        
-        # FIRST: Try to find ratings specifically for our domain
-        # Look for the domain in href or company name context
-        domain_specific_patterns = [
-            # Pattern that looks for our domain in href followed by rating
-            rf'href="[^"]*{re.escape(domain)}[^"]*"[^>]*>.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
-            # Pattern that looks for domain name followed by rating nearby
-            rf'{re.escape(domain)}.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
-            # Pattern for business unit card containing our domain
-            rf'business-unit-card[^>]*>[^<]*{re.escape(domain)}[^<]*<.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?'
-        ]
-        
-        print(f"🎯 Looking for domain-specific ratings for: {domain}")
-        for i, pattern in enumerate(domain_specific_patterns):
-            matches = re.findall(pattern, html_content, re.IGNORECASE | re.DOTALL)
-            if matches:
-                score = matches[0] if isinstance(matches[0], str) else matches[0][0]
-                print(f"✅ {domain} score found with domain-specific pattern {i+1}: {score}")
-                return score
-        
-        # FALLBACK: If domain-specific search fails, use generic patterns
-        print(f"🔄 Domain-specific search failed, trying generic patterns...")
-        
-        # Enhanced rating patterns to catch more variations
-        rating_patterns = [
-            # Main pattern with bullet and comma support: "4.8 • 34,148 reviews"
-            r'(\d\.\d)\s*•\s*[\d,]+\s*reviews?',
-            # Pattern with different separators and comma support
-            r'(\d\.\d)\s*[-–—]\s*[\d,]+\s*reviews?',
-            r'(\d\.\d)\s*\|\s*[\d,]+\s*reviews?',
-            # More flexible pattern with comma support
-            r'(\d\.\d)\s*[•\-–—\|]?\s*[\d,]+\s*reviews?',
-            # Pattern specifically for the format: "4.8 • 635 reviews" or "2.5 • 34,148 reviews"
-            r'(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
-            # Backup patterns without comma requirement
-            r'(\d\.\d)\s*•\s*\d+\s*reviews?',
-            r'(\d\.\d)\s*[•·]\s*\d+\s*reviews?'
-        ]
-        
-        for i, pattern in enumerate(rating_patterns):
-            matches = re.findall(pattern, html_content, re.IGNORECASE | re.DOTALL)
-            if matches:
-                # Extract just the rating (first capture group)
-                if isinstance(matches[0], tuple):
-                    score = matches[0][0]  # First element of tuple
-                else:
-                    score = matches[0]
-                print(f"✅ {domain} score found with pattern {i+1}: {score}")
-                return score
-        
-        # Additional fallback patterns
-        fallback_patterns = [
-            r'(\d\.\d)\s*out\s*of\s*5',
-            r'rating["\s]*:\s*["\s]*(\d\.\d)',
-            r'(\d\.\d)\s*stars?',
-            # Look for JSON-like data
-            r'"rating":\s*"?(\d\.\d)"?',
-            r'"score":\s*"?(\d\.\d)"?',
-            # Look for microdata
-            r'ratingValue["\s]*:\s*["\s]*(\d\.\d)',
-            # Very broad search for any decimal rating
-            r'(?:rating|score|stars?).*?(\d\.\d)',
-        ]
-        
-        print(f"🔄 Trying fallback patterns...")
-        for i, pattern in enumerate(fallback_patterns):
-            matches = re.findall(pattern, html_content, re.IGNORECASE)
-            if matches:
-                score = matches[0]
-                print(f"✅ {domain} score (fallback {i+1}): {score}")
-                return score
-        
-        print(f"❌ No rating found for: {domain}")
-        
-        # Debug: Let's see if "reviews" appears at all
-        if "reviews" in html_content.lower():
-            print(f"🔍 Found 'reviews' in content, but couldn't match rating pattern")
-            # Try to find any number followed by "reviews"
-            review_matches = re.findall(r'(\d+)\s*reviews?', html_content, re.IGNORECASE)
-            if review_matches:
-                print(f"📊 Found review counts: {review_matches[:3]}")  # Show first 3
-        
-        return "Not found"
-        
-    except Exception as e:
-        print(f"⚠️ Error for {source_url} (attempt {attempt + 1}): {e}")
-        if attempt == max_retries - 1:  # Last attempt
-            return "Error"
-        else:
+        if attempt < max_retries - 1:
             print(f"🔄 Retrying in 5 seconds...")
             time.sleep(5)
     
-    return "Error"  # Fallback if all retries failed
+    return "Not found"
 
-# Main execution code remains the same
-import pandas as pd
-import os
-
-def populate_trustpilot_scores(app):
+def populate_trustpilot_scores():
     # Find CSV file (adjust filename as needed)
     csv_files = [f for f in os.listdir('.') if f.endswith('.csv')]
     if not csv_files:
@@ -178,14 +203,19 @@ def populate_trustpilot_scores(app):
     for index, row in df.iterrows():
         source_url = row[url_column]  # Use the detected column name
         
+        # Skip if URL is empty or NaN
+        if pd.isna(source_url) or not source_url:
+            print(f"⏭️ Skipping row {index + 1}: empty URL")
+            continue
+        
         # Extract domain to check if we've already processed it
         try:
-            parsed_url = urlparse(source_url)
+            parsed_url = urlparse(str(source_url))
             domain = parsed_url.netloc
             if domain.startswith('www.'):
                 domain = domain[4:]
         except:
-            domain = source_url
+            domain = str(source_url)
         
         print(f"\n🔄 Processing row {index + 1}/{len(df)}: {source_url}")
         
@@ -195,7 +225,7 @@ def populate_trustpilot_scores(app):
             print(f"♻️ Using cached score for {domain}: {score}")
         else:
             # Get Trustpilot score (first time for this domain)
-            score = get_trustpilot_score(source_url, app)
+            score = get_trustpilot_score(source_url)
             domain_scores[domain] = score  # Cache the result
         
         # Always update the dataframe (even if score was cached)
@@ -209,11 +239,16 @@ def populate_trustpilot_scores(app):
     print(f"\n✅ Completed! Updated {updated_count} rows in {csv_file}")
 
 if __name__ == "__main__":
-    # Initialize the Firecrawl app
-    from firecrawl import FirecrawlApp
-    import os
-    
-    app = FirecrawlApp(api_key=os.getenv("FIRECRAWL_API_KEY"))
-    
     print("🚀 Starting Trustpilot score population...")
-    populate_trustpilot_scores(app)
+    print("📦 Required packages: requests, beautifulsoup4, pandas")
+    print("   Install with: pip install requests beautifulsoup4 pandas")
+    print()
+    
+    try:
+        populate_trustpilot_scores()
+    except ImportError as e:
+        print(f"❌ Missing required package: {e}")
+        print("Please install required packages with:")
+        print("pip install requests beautifulsoup4 pandas")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
