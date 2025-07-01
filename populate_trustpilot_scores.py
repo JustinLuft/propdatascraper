@@ -1,61 +1,46 @@
-import pandas as pd
-import time
-import re
-import os
-import urllib.parse
-from firecrawl import FirecrawlApp
-
-# Initialize Firecrawl with API key
-api_key = os.getenv("FIRECRAWL_API_KEY")
-app = FirecrawlApp(api_key=api_key)
-
-# Load existing CSV
-csv_path = "plans_output.csv"
-df = pd.read_csv(csv_path)
-
-# Function to search Trustpilot and extract score
 def get_trustpilot_score(business_name: str) -> str:
     try:
         print(f"🔍 Searching Trustpilot for: {business_name}")
-        encoded_name = urllib.parse.quote(business_name)
-        search_url = f"https://www.trustpilot.com/search?query={encoded_name}"
+        query = urllib.parse.quote(business_name)
+        search_url = f"https://www.trustpilot.com/search?query={query}"
 
-        # Firecrawl scrape
-        page = app.scrape_url(
+        # Step 1: Scrape the search results page
+        search_page = app.scrape_url(
             url=search_url,
-            formats=["html"],  # ✅ use a valid format
+            formats=["html"],
             only_main_content=False,
             timeout=90000
         )
 
-        # Parse the score
-        text = page.html.lower()  # ✅ use the correct field
+        # Step 2: Extract the first business profile link
+        links = re.findall(r'https://www\.trustpilot\.com/review/[a-zA-Z0-9\.-]+', search_page.html)
+        if not links:
+            print(f"❌ No business profile found for: {business_name}")
+            return "Not found"
+
+        profile_url = links[0]
+        print(f"🔗 Found profile: {profile_url}")
+
+        # Step 3: Scrape the business profile page
+        profile_page = app.scrape_url(
+            url=profile_url,
+            formats=["html"],
+            only_main_content=False,
+            timeout=90000
+        )
+
+        # Step 4: Extract the rating
+        text = profile_page.html.lower()
         match = re.search(r"(\d\.\d)\s*out of\s*5", text)
 
         if match:
             score = match.group(1)
-            print(f"✅ Found score for {business_name}: {score}")
+            print(f"✅ {business_name} score: {score}")
             return score
         else:
-            print(f"❌ Score not found on page for {business_name}")
+            print(f"❌ Score not found on business page for {business_name}")
             return "Not found"
 
     except Exception as e:
         print(f"⚠️ Error for {business_name}: {e}")
         return "Error"
-
-
-# Get unique business names and fetch scores
-unique_names = df["business_name"].dropna().unique()
-score_cache = {}
-
-for name in unique_names:
-    score_cache[name] = get_trustpilot_score(name)
-    time.sleep(1.5)  # Delay to be polite
-
-# Update DataFrame with scores
-df["trustpilot_score"] = df["business_name"].map(score_cache)
-
-# Save updated CSV (overwrite)
-df.to_csv(csv_path, index=False)
-print(f"\n✅ CSV updated and saved to: {csv_path}")
