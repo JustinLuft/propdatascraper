@@ -2,33 +2,63 @@ import urllib.parse
 import re
 from urllib.parse import urlparse
 
-def get_trustpilot_score(source_url: str, app) -> str:
-    try:
-        # Extract domain from source URL
-        parsed_url = urlparse(source_url)
-        domain = parsed_url.netloc
-        # Remove 'www.' if present
-        if domain.startswith('www.'):
-            domain = domain[4:]
-        
-        print(f"🔍 Searching Trustpilot for domain: {domain}")
-        
-        # Search Trustpilot using the domain
-        query = urllib.parse.quote(domain)
-        search_url = f"https://www.trustpilot.com/search?query={query}"
-        
-        # Step 1: Scrape the search results page
-        search_page = app.scrape_url(
-            url=search_url,
-            formats=["html"],
-            only_main_content=False,
-            timeout=90000
-        )
+def get_trustpilot_score(source_url: str, app, max_retries: int = 3) -> str:
+    for attempt in range(max_retries):
+        try:
+            # Extract domain from source URL
+            parsed_url = urlparse(source_url)
+            domain = parsed_url.netloc
+            # Remove 'www.' if present
+            if domain.startswith('www.'):
+                domain = domain[4:]
+            
+            print(f"🔍 Searching Trustpilot for domain: {domain} (attempt {attempt + 1}/{max_retries})")
+            
+            # Search Trustpilot using the domain
+            query = urllib.parse.quote(domain)
+            search_url = f"https://www.trustpilot.com/search?query={query}"
+            
+            # Add a small delay to avoid rate limiting
+            import time
+            if attempt > 0:  # Only delay on retries
+                time.sleep(5)  # 5 second delay on retries
+            else:
+                time.sleep(2)  # 2 second delay on first attempt
+            
+            # Step 1: Scrape the search results page
+            search_page = app.scrape_url(
+                url=search_url,
+                formats=["html"],
+                only_main_content=False,
+                timeout=90000
+            )
         
         html_content = search_page.html
         
         # Debug: Print some of the HTML to see what we're working with
         print(f"📝 HTML snippet: {html_content[:500]}...")
+        
+        # FIRST: Try to find ratings specifically for our domain
+        # Look for the domain in href or company name context
+        domain_specific_patterns = [
+            # Pattern that looks for our domain in href followed by rating
+            rf'href="[^"]*{re.escape(domain)}[^"]*"[^>]*>.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
+            # Pattern that looks for domain name followed by rating nearby
+            rf'{re.escape(domain)}.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?',
+            # Pattern for business unit card containing our domain
+            rf'business-unit-card[^>]*>[^<]*{re.escape(domain)}[^<]*<.*?(\d\.\d)\s*[•·]\s*[\d,]+\s*reviews?'
+        ]
+        
+        print(f"🎯 Looking for domain-specific ratings for: {domain}")
+        for i, pattern in enumerate(domain_specific_patterns):
+            matches = re.findall(pattern, html_content, re.IGNORECASE | re.DOTALL)
+            if matches:
+                score = matches[0] if isinstance(matches[0], str) else matches[0][0]
+                print(f"✅ {domain} score found with domain-specific pattern {i+1}: {score}")
+                return score
+        
+        # FALLBACK: If domain-specific search fails, use generic patterns
+        print(f"🔄 Domain-specific search failed, trying generic patterns...")
         
         # Enhanced rating patterns to catch more variations
         rating_patterns = [
@@ -92,8 +122,14 @@ def get_trustpilot_score(source_url: str, app) -> str:
         return "Not found"
         
     except Exception as e:
-        print(f"⚠️ Error for {source_url}: {e}")
-        return "Error"
+        print(f"⚠️ Error for {source_url} (attempt {attempt + 1}): {e}")
+        if attempt == max_retries - 1:  # Last attempt
+            return "Error"
+        else:
+            print(f"🔄 Retrying in 5 seconds...")
+            time.sleep(5)
+    
+    return "Error"  # Fallback if all retries failed
 
 # Main execution code remains the same
 import pandas as pd
