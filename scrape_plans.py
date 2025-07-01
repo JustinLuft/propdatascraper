@@ -69,6 +69,7 @@ urls = [
     "https://apextraderfunding.com/",
     "https://myfundedfutures.com/",
     "https://thelegendstrading.com/",
+    "https://www.topstep.com/",
     # Add more URLs here
     # "https://anotherwebsite.com/plans",
 ]
