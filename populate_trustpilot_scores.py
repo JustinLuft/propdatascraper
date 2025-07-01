@@ -77,32 +77,56 @@ def populate_trustpilot_scores():
     df = pd.read_csv(csv_file)
     print(f"📊 Found {len(df)} rows")
     
-    # Check if required columns exist
-    if 'source_url' not in df.columns:
-        print("❌ No 'source_url' column found!")
+    # Check if required columns exist and find the URL column
+    print(f"📋 Available columns: {list(df.columns)}")
+    
+    url_column = None
+    possible_url_columns = ['source_url', 'source url', 'url', 'website', 'link']
+    
+    for col in possible_url_columns:
+        if col in df.columns:
+            url_column = col
+            break
+    
+    if not url_column:
+        print(f"❌ No URL column found! Available columns: {list(df.columns)}")
+        print("Looking for one of: source_url, source url, url, website, link")
         return
+    
+    print(f"✅ Using URL column: '{url_column}'")
     
     # Add trustpilot_score column if it doesn't exist
     if 'trustpilot_score' not in df.columns:
         df['trustpilot_score'] = ''
     
-    # Process each row
+    # Process each row - track domains to avoid duplicate API calls
     updated_count = 0
+    domain_scores = {}  # Cache scores by domain
+    
     for index, row in df.iterrows():
-        source_url = row['source_url']
-        current_score = row.get('trustpilot_score', '')
+        source_url = row[url_column]  # Use the detected column name
         
-        # Skip if already has a score (unless it's empty, "Not found", or "Error")
-        if current_score and current_score not in ['', 'Not found', 'Error']:
-            print(f"⏭️ Skipping {source_url} (already has score: {current_score})")
-            continue
+        # Extract domain to check if we've already processed it
+        try:
+            parsed_url = urlparse(source_url)
+            domain = parsed_url.netloc
+            if domain.startswith('www.'):
+                domain = domain[4:]
+        except:
+            domain = source_url
         
         print(f"\n🔄 Processing row {index + 1}/{len(df)}: {source_url}")
         
-        # Get Trustpilot score
-        score = get_trustpilot_score(source_url)
+        # Check if we already have the score for this domain
+        if domain in domain_scores:
+            score = domain_scores[domain]
+            print(f"♻️ Using cached score for {domain}: {score}")
+        else:
+            # Get Trustpilot score (first time for this domain)
+            score = get_trustpilot_score(source_url)
+            domain_scores[domain] = score  # Cache the result
         
-        # Update the dataframe
+        # Always update the dataframe (even if score was cached)
         df.at[index, 'trustpilot_score'] = score
         updated_count += 1
         
