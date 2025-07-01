@@ -8,54 +8,57 @@ from firecrawl import FirecrawlApp
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
-# Load CSV
+# Load existing CSV
 csv_path = "plans_output.csv"
 df = pd.read_csv(csv_path)
 
 # Function to get Trustpilot score
 def get_trustpilot_score(business_name: str) -> str:
     try:
-        # Google-style query
+        print(f"🔍 Searching for: {business_name}")
         query = f"site:trustpilot.com {business_name}"
-        search = app.search(query=query, num_results=1)
-        trustpilot_url = search.results[0].url
+        search_response = app.search(query=query)  # FIXED: removed num_results
 
-        # Scrape Trustpilot page
+        if not search_response.results:
+            print(f"❌ No Trustpilot result found for: {business_name}")
+            return "Not found"
+
+        trustpilot_url = search_response.results[0].url
+        print(f"🔗 Trustpilot URL found: {trustpilot_url}")
+
         page = app.scrape_url(
             url=trustpilot_url,
             formats=["text"],
             only_main_content=False,
-            timeout=60000
+            timeout=90000
         )
 
-        # Parse out score
         text = page.text.lower()
         match = re.search(r"(\d\.\d)\s*out of\s*5", text)
+
         if match:
-            print(f"✔ {business_name}: {match.group(1)}")
-            return match.group(1)
+            score = match.group(1)
+            print(f"✅ {business_name} Trustpilot Score: {score}")
+            return score
         else:
-            print(f"✘ {business_name}: Not found")
+            print(f"❌ Score not found on page for: {business_name}")
             return "Not found"
 
     except Exception as e:
-        print(f"⚠️ Error for {business_name}: {e}")
+        print(f"⚠️ Error fetching Trustpilot for {business_name}: {e}")
         return "Error"
 
-# Get unique business names
+# Get unique business names and cache results
 unique_names = df["business_name"].dropna().unique()
 score_cache = {}
 
-# Fetch scores (cache avoids re-querying duplicates)
 for name in unique_names:
     score_cache[name] = get_trustpilot_score(name)
-    time.sleep(1.5)  # Rate limit for safety
+    time.sleep(1.5)  # polite delay
 
-# Apply scores back into DataFrame
+# Update DataFrame with scores
 df["trustpilot_score"] = df["business_name"].map(score_cache)
 
-# Save updated CSV (overwrite or new file)
-updated_csv_path = "plans_output_with_scores.csv"
-df.to_csv(updated_csv_path, index=False)
-
-print(f"\n✅ Updated CSV saved as {updated_csv_path}")
+# Save over the original CSV file
+df.to_csv(csv_path, index=False)
+print(f"\n✅ CSV updated with Trustpilot scores and saved to: {csv_path}")
