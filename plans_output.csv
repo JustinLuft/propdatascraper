@@ -1,17 +1,17 @@
 plan_name,account_type,account_size,price_raw,profit_goal,trailing_drawdown,daily_loss_limit,activation_fee,reset_fee,drawdown_mode,business_name,discount_code,trustpilot_score,source_url
-$50K Evaluation Account,Evaluation,"$50,000",$29,"$3,000","$2,000",Not specified,$99,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0,https://rightlinefunding.com/
-$50K SIM Funded Account,SIM Funded,"$50,000",$299.00,"$3,000","$2,000",Not specified,Not specified,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0,https://rightlinefunding.com/
-$150K Evaluation Account,Evaluation,"$150,000",$99.00,"$9,000","$5,000",Not specified,$99,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0,https://rightlinefunding.com/
-$150K SIM Funded Account,SIM Funded,"$150,000",$449.00,"$9,000","$5,000",Not specified,Not specified,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0,https://rightlinefunding.com/
-,,,,,,,,,,"Tradeify Holdings, Corp.",JULY,,https://tradeify.co/plan
-Starter,Sim Funded,"$50,000",$127 / month,"$3,000",EOD,$0,$0,,EOD,MyFundedFutures,,,https://myfundedfutures.com/
-Core,Sim Funded,"$100,000",$267 / month,"$6,000",EOD,$0,$0,,EOD,MyFundedFutures,,,https://myfundedfutures.com/
-Pro,Sim Funded,"$150,000",$377 / month,"$9,000",EOD,$0,$0,,EOD,MyFundedFutures,,,https://myfundedfutures.com/
-"$25,000",Apprentice Legends Account,Max 4 contracts / 40 micros,$165/Month,"$1,500","$1,500 EOD trailing max loss",,,,5 days,Legends Trading,,,https://thelegendstrading.com/
-"$50,000",Apprentice Legends Account,Max 10 contracts / 50 micros,$185/Month,"$3,000","$2,000 EOD trailing max loss",,,,5 days,Legends Trading,,,https://thelegendstrading.com/
-"$100,000",Apprentice Legends Account,Max 14 contracts / 70 micros,$225/Month,"$6,000","$3,000 EOD trailing max loss",,,,5 days,Legends Trading,,,https://thelegendstrading.com/
-"$150,000",Apprentice Legends Account,Max 17 contracts / 85 micros,$320/Month,"$9,000","$4,000 EOD trailing max loss",,,,5 days,Legends Trading,,,https://thelegendstrading.com/
-Practice Account,Practice Account,,$68/month,,,,,,,Legends Trading,,,https://thelegendstrading.com/
+$50K Evaluation Account,Evaluation,"$50,000",$29,"$3,000","$2,000",Not specified,$99,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+$50K SIM Funded Account,SIM Funded,"$50,000",$299.00,"$3,000","$2,000",Not specified,Not specified,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+$150K Evaluation Account,Evaluation,"$150,000",$99.00,"$9,000","$5,000",Not specified,$99,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+$150K SIM Funded Account,SIM Funded,"$150,000",$449.00,"$9,000","$5,000",Not specified,Not specified,Not specified,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+,,,,,,,,,,"Tradeify Holdings, Corp.",JULY,4.7,https://tradeify.co/plan
+Starter,Sim Funded,"$50,000",$127 / month,"$3,000",EOD,$0,$0,,EOD,MyFundedFutures,,4.9,https://myfundedfutures.com/
+Core,Sim Funded,"$100,000",$267 / month,"$6,000",EOD,$0,$0,,EOD,MyFundedFutures,,4.9,https://myfundedfutures.com/
+Pro,Sim Funded,"$150,000",$377 / month,"$9,000",EOD,$0,$0,,EOD,MyFundedFutures,,4.9,https://myfundedfutures.com/
+"$25,000",Apprentice Legends Account,Max 4 contracts / 40 micros,$165/Month,"$1,500","$1,500 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
+"$50,000",Apprentice Legends Account,Max 10 contracts / 50 micros,$185/Month,"$3,000","$2,000 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
+"$100,000",Apprentice Legends Account,Max 14 contracts / 70 micros,$225/Month,"$6,000","$3,000 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
+"$150,000",Apprentice Legends Account,Max 17 contracts / 85 micros,$320/Month,"$9,000","$4,000 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
+Practice Account,Practice Account,,$68/month,,,,,,,Legends Trading,,2.9,https://thelegendstrading.com/
 $50k Buying Power,Express Funded Account,"50,000",$49/mo,"$3,000","$2,000",,$149,,,Topstep,,4.3,https://www.topstep.com/
 $100k Buying Power,Express Funded Account,"100,000",$99/mo,"$6,000","$3,000",,$149,,,Topstep,,4.3,https://www.topstep.com/
 $150k Buying Power,Express Funded Account,"150,000",$149/mo,"$9,000","$4,500",,$149,,,Topstep,,4.3,https://www.topstep.com/
