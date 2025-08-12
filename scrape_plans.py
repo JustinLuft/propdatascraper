@@ -89,45 +89,35 @@ for url in urls:
             timeout=120000
         )
         
-        # FIX: Handle different response structures in newer Firecrawl versions
-        try:
-            # Method 1: For newer versions - response.data contains the extracted JSON
-            if hasattr(response, 'data') and response.data is not None:
-                data = response.data
-                print(f"  Using response.data for {url}")
-            # Method 2: For newer versions - response might have 'extract' key
-            elif hasattr(response, 'extract') and response.extract is not None:
-                data = response.extract
-                print(f"  Using response.extract for {url}")
-            # Method 3: Response might be a dict with 'data' key
-            elif isinstance(response, dict) and 'data' in response:
-                data = response['data']
-                print(f"  Using response['data'] for {url}")
-            # Method 4: Legacy - call json as a method
-            elif hasattr(response, 'json') and callable(response.json):
-                data = response.json()
-                print(f"  Using response.json() for {url}")
-            # Method 5: Legacy - access json as property
-            elif hasattr(response, 'json'):
-                data = response.json
-                print(f"  Using response.json for {url}")
-            else:
-                # If none of the above work, the response itself might be the data
-                data = response
-                print(f"  Using response directly for {url}")
+        # FIX: Handle the ScrapeResponse object properly
+        import json
         
-        except Exception as access_error:
-            print(f"  Error accessing response data: {access_error}")
-            continue
+        # The response.json() returns a JSON string, we need to parse it
+        json_string = response.json()
+        parsed_response = json.loads(json_string)
+        
+        # The extracted data is in the 'json_field' key according to your debug output
+        if 'json_field' in parsed_response and parsed_response['json_field']:
+            data = parsed_response['json_field']
+            print(f"  Using parsed json_field for {url}")
+        elif 'extract' in parsed_response and parsed_response['extract']:
+            data = parsed_response['extract']
+            print(f"  Using parsed extract for {url}")
+        else:
+            # Fallback to the entire parsed response
+            data = parsed_response
+            print(f"  Using entire parsed response for {url}")
         
         # Debug: Print the type and structure of data
         print(f"  Data type: {type(data)}")
         if isinstance(data, dict):
             print(f"  Data keys: {list(data.keys())}")
-        elif hasattr(data, '__dict__'):
-            print(f"  Data attributes: {list(data.__dict__.keys())}")
+            # Print first few characters of key values for debugging
+            for key, value in list(data.items())[:3]:
+                preview = str(value)[:50] if value else "None"
+                print(f"    {key}: {preview}...")
         else:
-            print(f"  Data content preview: {str(data)[:100]}...")
+            print(f"  Data content preview: {str(data)[:200]}...")
         
         # Flatten and enrich each plan with overall metadata
         for plan in data.get('plans', []):
