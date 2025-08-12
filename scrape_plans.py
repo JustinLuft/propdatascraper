@@ -81,6 +81,10 @@ all_plans = []
 for url in urls:
     print(f"Scraping {url} ...")
     try:
+        # First, let's see what Firecrawl version we're using
+        import firecrawl
+        print(f"  Firecrawl version: {firecrawl.__version__}")
+        
         response = app.scrape_url(
             url=url,
             formats=["json"],
@@ -88,7 +92,46 @@ for url in urls:
             only_main_content=False,
             timeout=120000
         )
-        data = response.json
+        
+        # Debug: Check the response object thoroughly
+        print(f"  Response type: {type(response)}")
+        print(f"  Response: {response}")
+        print(f"  Response attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+        
+        # Check if response has json attribute and what type it is
+        if hasattr(response, 'json'):
+            print(f"  response.json type: {type(response.json)}")
+            print(f"  response.json value: {response.json}")
+        
+        # Try different ways to access the JSON data
+        try:
+            # Method 1: If json is a method
+            data = response.json()
+            print(f"  Successfully used response.json()")
+        except (TypeError, AttributeError) as e:
+            print(f"  response.json() failed: {e}")
+            try:
+                # Method 2: If json is a property
+                data = response.json
+                print(f"  Successfully used response.json")
+            except AttributeError as e:
+                print(f"  response.json failed: {e}")
+                try:
+                    # Method 3: If it's accessed as a dictionary key
+                    data = response['json']
+                    print(f"  Successfully used response['json']")
+                except (KeyError, TypeError) as e:
+                    print(f"  response['json'] failed: {e}")
+                    # Method 4: Direct data access
+                    data = response.data if hasattr(response, 'data') else response
+                    print(f"  Using fallback data access")
+        
+        print(f"  Data type: {type(data)}")
+        
+        # Ensure data is a dictionary
+        if not isinstance(data, dict):
+            print(f"  Warning: Expected dict, got {type(data)}")
+            continue
         
         # Flatten and enrich each plan with overall metadata
         for plan in data.get('plans', []):
