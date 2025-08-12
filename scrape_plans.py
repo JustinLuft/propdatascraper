@@ -1,12 +1,13 @@
+# Install Firecrawl
 # Imports
-from firecrawl import FirecrawlApp
+from firecrawl import JsonConfig, FirecrawlApp
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
 import re
-import os
 
 # Initialize Firecrawl
+import os
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
@@ -21,7 +22,7 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str
+    drawdown_mode: str  # <-- New field added here
 
 # Define the overall schema including multiple plans
 class ExtractSchema(BaseModel):
@@ -57,6 +58,11 @@ def convert_k_to_thousands(value):
     result = re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
     return result
 
+# Create JSON extraction config
+json_config = JsonConfig(
+    schema=ExtractSchema
+)
+
 # List of URLs to scrape
 urls = [
     "https://rightlinefunding.com/",
@@ -65,6 +71,8 @@ urls = [
     "https://myfundedfutures.com/",
     "https://thelegendstrading.com/",
     "https://www.topstep.com/",
+    # Add more URLs here
+    # "https://anotherwebsite.com/plans",
 ]
 
 # Collect all scraped plan data here
@@ -73,38 +81,14 @@ all_plans = []
 for url in urls:
     print(f"Scraping {url} ...")
     try:
-        # Fixed API call - pass parameters directly, not in a 'params' dict
         response = app.scrape_url(
             url=url,
-            formats=['extract'],
-            extract={
-                'schema': ExtractSchema.model_json_schema()
-            },
-            onlyMainContent=False,
+            formats=["json"],
+            json_options=json_config,
+            only_main_content=False,
             timeout=120000
         )
-        
-        # Debug: Check what we got back
-        print(f"  Response type: {type(response)}")
-        print(f"  Response keys: {list(response.keys()) if isinstance(response, dict) else 'Not a dict'}")
-        
-        # Access the extracted data
-        if 'extract' in response:
-            data = response['extract']
-        elif 'data' in response:
-            data = response['data']
-        else:
-            # Fallback - print full response to debug
-            print(f"  Full response: {response}")
-            continue
-        
-        print(f"  Data type: {type(data)}")
-        print(f"  Data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
-        
-        # Ensure data is a dictionary
-        if not isinstance(data, dict):
-            print(f"  Warning: Expected dict, got {type(data)}")
-            continue
+        data = response.json
         
         # Flatten and enrich each plan with overall metadata
         for plan in data.get('plans', []):
@@ -128,9 +112,6 @@ for url in urls:
             
     except Exception as e:
         print(f"Error scraping {url}: {e}")
-        # Print more details for debugging
-        import traceback
-        traceback.print_exc()
 
 # Convert all collected plans to a single DataFrame
 plans_df = pd.DataFrame(all_plans)
