@@ -93,7 +93,7 @@ for url in urls:
         import json
         
         # The response.json() returns a JSON string, we need to parse it
-        json_string = response.json()
+        json_string = response.model_dump_json()
         parsed_response = json.loads(json_string)
         
         # The extracted data is in the 'json_field' key according to your debug output
