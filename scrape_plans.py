@@ -1,13 +1,12 @@
-# Install Firecrawl
 # Imports
-from firecrawl import JsonConfig, FirecrawlApp
+from firecrawl import FirecrawlApp
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
 import re
+import os
 
 # Initialize Firecrawl
-import os
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
@@ -22,7 +21,7 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # <-- New field added here
+    drawdown_mode: str
 
 # Define the overall schema including multiple plans
 class ExtractSchema(BaseModel):
@@ -58,11 +57,6 @@ def convert_k_to_thousands(value):
     result = re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
     return result
 
-# Create JSON extraction config
-json_config = JsonConfig(
-    schema=ExtractSchema
-)
-
 # List of URLs to scrape
 urls = [
     "https://rightlinefunding.com/",
@@ -71,8 +65,6 @@ urls = [
     "https://myfundedfutures.com/",
     "https://thelegendstrading.com/",
     "https://www.topstep.com/",
-    # Add more URLs here
-    # "https://anotherwebsite.com/plans",
 ]
 
 # Collect all scraped plan data here
@@ -81,52 +73,35 @@ all_plans = []
 for url in urls:
     print(f"Scraping {url} ...")
     try:
-        # First, let's see what Firecrawl version we're using
-        import firecrawl
-        print(f"  Firecrawl version: {firecrawl.__version__}")
-        
+        # Updated API call for new Firecrawl version
         response = app.scrape_url(
             url=url,
-            formats=["json"],
-            json_options=json_config,
-            only_main_content=False,
-            timeout=120000
+            params={
+                'formats': ['extract'],
+                'extract': {
+                    'schema': ExtractSchema.model_json_schema()
+                },
+                'onlyMainContent': False,
+                'timeout': 120000
+            }
         )
         
-        # Debug: Check the response object thoroughly
+        # Debug: Check what we got back
         print(f"  Response type: {type(response)}")
-        print(f"  Response: {response}")
-        print(f"  Response attributes: {[attr for attr in dir(response) if not attr.startswith('_')]}")
+        print(f"  Response keys: {list(response.keys()) if isinstance(response, dict) else 'Not a dict'}")
         
-        # Check if response has json attribute and what type it is
-        if hasattr(response, 'json'):
-            print(f"  response.json type: {type(response.json)}")
-            print(f"  response.json value: {response.json}")
-        
-        # Try different ways to access the JSON data
-        try:
-            # Method 1: If json is a method
-            data = response.json()
-            print(f"  Successfully used response.json()")
-        except (TypeError, AttributeError) as e:
-            print(f"  response.json() failed: {e}")
-            try:
-                # Method 2: If json is a property
-                data = response.json
-                print(f"  Successfully used response.json")
-            except AttributeError as e:
-                print(f"  response.json failed: {e}")
-                try:
-                    # Method 3: If it's accessed as a dictionary key
-                    data = response['json']
-                    print(f"  Successfully used response['json']")
-                except (KeyError, TypeError) as e:
-                    print(f"  response['json'] failed: {e}")
-                    # Method 4: Direct data access
-                    data = response.data if hasattr(response, 'data') else response
-                    print(f"  Using fallback data access")
+        # Access the extracted data
+        if 'extract' in response:
+            data = response['extract']
+        elif 'data' in response:
+            data = response['data']
+        else:
+            # Fallback - print full response to debug
+            print(f"  Full response: {response}")
+            continue
         
         print(f"  Data type: {type(data)}")
+        print(f"  Data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
         
         # Ensure data is a dictionary
         if not isinstance(data, dict):
@@ -155,6 +130,9 @@ for url in urls:
             
     except Exception as e:
         print(f"Error scraping {url}: {e}")
+        # Print more details for debugging
+        import traceback
+        traceback.print_exc()
 
 # Convert all collected plans to a single DataFrame
 plans_df = pd.DataFrame(all_plans)
