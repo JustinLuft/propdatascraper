@@ -8,7 +8,7 @@ import re
 
 # Initialize Firecrawl
 import os
-api_key = os.getenv("FIRECRAWL_API_KEY")
+api_key = os.getenv("FIRECRAWL_API_KEY2")
 app = FirecrawlApp(api_key=api_key)
 
 # Define the schema for each plan
