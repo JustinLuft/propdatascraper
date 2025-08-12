@@ -73,17 +73,15 @@ all_plans = []
 for url in urls:
     print(f"Scraping {url} ...")
     try:
-        # Updated API call for new Firecrawl version
+        # Fixed API call - pass parameters directly, not in a 'params' dict
         response = app.scrape_url(
             url=url,
-            params={
-                'formats': ['extract'],
-                'extract': {
-                    'schema': ExtractSchema.model_json_schema()
-                },
-                'onlyMainContent': False,
-                'timeout': 120000
-            }
+            formats=['extract'],
+            extract={
+                'schema': ExtractSchema.model_json_schema()
+            },
+            onlyMainContent=False,
+            timeout=120000
         )
         
         # Debug: Check what we got back
