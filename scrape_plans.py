@@ -57,42 +57,36 @@ def convert_k_to_thousands(value):
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
 # -----------------------------
-# URLs to scrape with optional tab selectors
+# URLs to scrape
 # -----------------------------
-urls_with_tabs = {
-    "https://rightlinefunding.com/": [],
-    "https://tradeify.co/": [],
-    "https://apextraderfunding.com/": [],
-    "https://myfundedfutures.com/": [
-        ".funding-tab",  # Replace with actual CSS selector for tabs
-    ],
-    "https://thelegendstrading.com/": [],
-    "https://www.topstep.com/": [],
-}
+urls = [
+    "https://rightlinefunding.com/",
+    "https://tradeify.co/",
+    "https://apextraderfunding.com/",
+    "https://myfundedfutures.com/",
+    "https://thelegendstrading.com/",
+    "https://www.topstep.com/",
+]
 
 all_plans = []
 
 # -----------------------------
 # Scraping Loop with detailed debug
 # -----------------------------
-for url, tabs in urls_with_tabs.items():
+for url in urls:
     print(f"\nScraping {url} ...")
     try:
-        actions = []
-
-        # Add clicks for all tab selectors
-        for tab_selector in tabs:
-            actions.append({"click": tab_selector})
-
         doc = app.scrape(
             url=url,
-            formats=[{"type": "json", "schema": ExtractSchema}],
+            formats=[{
+                "type": "json",
+                "schema": ExtractSchema
+            }],
             only_main_content=False,
-            timeout=120000,
-            actions=actions if actions else None,
-            wait_for=".plans-loaded"  # Replace with a selector indicating all plans are loaded
+            timeout=120000
         )
 
+        # doc.json is a property, not callable
         data = doc.json
 
         if not data:
@@ -123,8 +117,6 @@ for url, tabs in urls_with_tabs.items():
                 plan_dict["account_size"] = convert_k_to_thousands(original_value)
                 if original_value != plan_dict["account_size"]:
                     print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
-            else:
-                print(f"  Warning: account_size missing for plan '{plan_dict.get('plan_name','?')}'")
 
             all_plans.append(plan_dict)
 
