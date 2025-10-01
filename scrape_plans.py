@@ -1,4 +1,4 @@
-# scrape_plans.py
+a# scrape_plans.py
 # pip install firecrawl pandas pydantic
 
 from firecrawl import FirecrawlApp
@@ -8,6 +8,7 @@ import pandas as pd
 import re
 import os
 import json
+import time
 
 # -----------------------------
 # Initialize Firecrawl
@@ -71,39 +72,70 @@ urls = [
 all_plans = []
 
 # -----------------------------
-# Scraping Loop with detailed debug
+# Scraping Loop with dynamic tab handling
 # -----------------------------
 for url in urls:
     print(f"\nScraping {url} ...")
     try:
-        doc = app.scrape(
+        # Initial scrape to detect tabs
+        initial_doc = app.scrape(
             url=url,
-            formats=[{
-                "type": "json",
-                "schema": ExtractSchema
-            }],
+            formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
             timeout=120000
         )
 
-        # doc.json is a property, not callable
-        data = doc.json
-
+        data = initial_doc.json
         if not data:
             print(f"  No data returned for {url}")
             continue
 
-        # Debug: print type & keys
+        # Debug: show initial keys
         print(f"  Data type: {type(data)}")
         if isinstance(data, dict):
             print(f"  Data keys: {list(data.keys())}")
             for key, value in list(data.items())[:3]:
                 preview = str(value)[:50] if value else "None"
                 print(f"    {key}: {preview}...")
-        else:
-            print(f"  Data preview: {str(data)[:200]}...")
 
-        # Flatten plans and enrich with metadata
+        # Step 1: Detect tab buttons dynamically (heuristic)
+        tab_selectors = []
+        try:
+            html = initial_doc.html
+            # Look for buttons or divs with "tab" in class
+            matches = re.findall(r'<(button|div)[^>]+class="[^"]*tab[^"]*"[^>]*>', html, re.IGNORECASE)
+            tab_selectors = list(set(matches))
+        except:
+            pass
+
+        actions = []
+        for idx, tag in enumerate(tab_selectors):
+            # Build generic selector (id or class)
+            match = re.search(r'(id|class)="([^"]+)"', tag)
+            if match:
+                attr, value = match.groups()
+                if attr == "id":
+                    selector = f"#{value}"
+                else:
+                    selector = f".{value.replace(' ', '.')}"
+                actions.append({"click": selector})
+
+        # Step 2: If tabs detected, click each one dynamically
+        if actions:
+            print(f"  Detected {len(actions)} tabs, clicking dynamically...")
+            doc = app.scrape(
+                url=url,
+                formats=[{"type": "json", "schema": ExtractSchema}],
+                only_main_content=False,
+                timeout=120000,
+                actions=actions,
+                wait_for=".plans-loaded"  # generic placeholder for loaded plans
+            )
+            data = doc.json
+        else:
+            print("  No dynamic tabs detected, scraping initial content only.")
+
+        # Step 3: Flatten plans and enrich with metadata
         for plan in data.get("plans", []):
             plan_dict = dict(plan)
             plan_dict["business_name"] = data.get("business_name", "")
@@ -111,20 +143,21 @@ for url in urls:
             plan_dict["trustpilot_score"] = data.get("trustpilot_score", "")
             plan_dict["source_url"] = url
 
-            # Convert K notation
             if "account_size" in plan_dict:
                 original_value = plan_dict["account_size"]
                 plan_dict["account_size"] = convert_k_to_thousands(original_value)
                 if original_value != plan_dict["account_size"]:
                     print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
+            else:
+                print(f"  Warning: account_size missing for plan '{plan_dict.get('plan_name','?')}'")
 
             all_plans.append(plan_dict)
 
     except Exception as e:
         print(f"  Error scraping {url}: {e}")
         try:
-            print(f"    doc type: {type(doc)}")
-            print(f"    doc attributes: {dir(doc)}")
+            print(f"    doc type: {type(initial_doc)}")
+            print(f"    doc attributes: {dir(initial_doc)}")
         except:
             pass
 
