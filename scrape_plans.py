@@ -8,6 +8,7 @@ import pandas as pd
 import re
 import os
 import json
+import time
 
 # -----------------------------
 # Initialize Firecrawl
@@ -56,159 +57,184 @@ def convert_k_to_thousands(value):
 
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
-def generate_click_actions():
-    """Generate a comprehensive list of click actions for common tab patterns"""
-    actions = []
-    
-    # Common tab selectors - try to click each one
-    selectors = [
-        # Generic tab patterns
-        'button[role="tab"]',
-        'a[role="tab"]',
-        '[data-tab]',
-        '[data-tabs]',
-        
-        # Class-based patterns
-        'button[class*="tab"]',
-        'a[class*="tab"]',
-        
-        # Common pricing page patterns
-        'button[class*="plan"]',
-        'a[class*="plan"]',
-        
-        # Specific selectors for known sites
-        'button.font-bold.rounded-lg',  # MyFunded Futures
-        'a.link-button.w-inline-block',  # Tradeify
-        
-        # Look for grouped buttons (often tabs)
-        'nav button',
-        '[role="tablist"] button',
-        '[role="tablist"] a',
-        
-        # Additional patterns
-        'button[class*="inline-block"]',
-        'a[class*="inline-block"]',
-    ]
-    
-    # For each selector, add click + wait
-    for selector in selectors:
-        actions.append({
-            "type": "click",
-            "selector": selector
-        })
-        actions.append({
-            "type": "wait",
-            "milliseconds": 800
-        })
-    
-    # Add a final longer wait to let all content load
-    actions.append({
-        "type": "wait",
-        "milliseconds": 2000
-    })
-    
-    return actions
-
 # -----------------------------
-# URLs to scrape
+# Site configurations with multiple scrapes per site
+# Each site can have multiple "passes" to click different tabs
 # -----------------------------
-urls = [
-    "https://rightlinefunding.com/",
-    "https://tradeify.co/",
-    "https://apextraderfunding.com/",
-    "https://myfundedfutures.com/",
-    "https://thelegendstrading.com/",
-    "https://www.topstep.com/",
+sites_config = [
+    {
+        "name": "Right Line Funding",
+        "url": "https://rightlinefunding.com/",
+        "passes": [
+            {"description": "Default view", "actions": None},
+        ]
+    },
+    {
+        "name": "Tradeify",
+        "url": "https://tradeify.co/",
+        "passes": [
+            {"description": "Lightning Funded", "actions": None},
+            {"description": "Growth tab", "actions": [
+                {"type": "click", "selector": "button:has-text('Growth'), a:has-text('Growth')"},
+                {"type": "wait", "milliseconds": 2000}
+            ]},
+            {"description": "Advanced tab", "actions": [
+                {"type": "click", "selector": "button:has-text('Advanced'), a:has-text('Advanced')"},
+                {"type": "wait", "milliseconds": 2000}
+            ]},
+        ]
+    },
+    {
+        "name": "Apex Trader Funding",
+        "url": "https://apextraderfunding.com/",
+        "passes": [
+            {"description": "Default view", "actions": None},
+        ]
+    },
+    {
+        "name": "MyFunded Futures",
+        "url": "https://myfundedfutures.com/",
+        "passes": [
+            {"description": "Core plan", "actions": None},
+            {"description": "Scale plan", "actions": [
+                {"type": "click", "selector": "button:nth-of-type(2)"},
+                {"type": "wait", "milliseconds": 2000}
+            ]},
+            {"description": "Pro plan", "actions": [
+                {"type": "click", "selector": "button:nth-of-type(3)"},
+                {"type": "wait", "milliseconds": 2000}
+            ]},
+        ]
+    },
+    {
+        "name": "The Legends Trading",
+        "url": "https://thelegendstrading.com/",
+        "passes": [
+            {"description": "Default view", "actions": None},
+        ]
+    },
+    {
+        "name": "TopStep",
+        "url": "https://www.topstep.com/",
+        "passes": [
+            {"description": "Default view", "actions": None},
+        ]
+    },
 ]
 
 all_plans = []
+seen_plans = set()  # Track unique plans to avoid duplicates
 
 # -----------------------------
 # Scraping Loop
 # -----------------------------
-for url in urls:
-    print(f"\nScraping {url} ...")
-    try:
-        # Generate actions list
-        actions = generate_click_actions()
+for site_config in sites_config:
+    site_name = site_config["name"]
+    url = site_config["url"]
+    passes = site_config["passes"]
+    
+    print(f"\n{'='*60}")
+    print(f"Scraping {site_name} ({url})")
+    print(f"{'='*60}")
+    
+    site_plans_count = 0
+    
+    for pass_idx, pass_config in enumerate(passes):
+        description = pass_config["description"]
+        actions = pass_config["actions"]
         
-        # Scrape the page
-        doc = app.scrape(
-            url=url,
-            formats=[{"type": "json", "schema": ExtractSchema}],
-            only_main_content=False,
-            timeout=120000,
-            actions=actions
-        )
+        print(f"\n  Pass {pass_idx + 1}/{len(passes)}: {description}")
+        
+        try:
+            # Scrape with or without actions
+            doc = app.scrape(
+                url=url,
+                formats=[{"type": "json", "schema": ExtractSchema}],
+                only_main_content=False,
+                timeout=120000,
+                actions=actions if actions else []
+            )
 
-        data = doc.json
-        if not data:
-            print(f"  No data returned for {url}")
-            continue
+            data = doc.json
+            if not data:
+                print(f"    No data returned")
+                continue
 
-        # Debug: show keys
-        print(f"  Data type: {type(data)}")
-        if isinstance(data, dict):
-            print(f"  Data keys: {list(data.keys())}")
-            plan_count = len(data.get('plans', []))
-            print(f"  Found {plan_count} plans")
+            # Extract plans
+            plans = data.get('plans', [])
+            print(f"    Found {len(plans)} plans in this pass")
+
+            # Process plans
+            for plan in plans:
+                # Create unique identifier for deduplication
+                plan_id = f"{url}|{plan.get('plan_name', '')}|{plan.get('account_size', '')}|{plan.get('price_raw', '')}"
+                
+                if plan_id in seen_plans:
+                    print(f"      Skipping duplicate: {plan.get('plan_name', 'Unknown')}")
+                    continue
+                
+                seen_plans.add(plan_id)
+                
+                plan_dict = dict(plan)
+                plan_dict["business_name"] = data.get("business_name", site_name)
+                plan_dict["discount_code"] = data.get("discount_code", "")
+                plan_dict["trustpilot_score"] = data.get("trustpilot_score", "")
+                plan_dict["source_url"] = url
+
+                # Convert K notation
+                if "account_size" in plan_dict:
+                    original_value = plan_dict["account_size"]
+                    plan_dict["account_size"] = convert_k_to_thousands(original_value)
+
+                all_plans.append(plan_dict)
+                site_plans_count += 1
+                
+                print(f"      ✓ {plan.get('plan_name', 'Unknown')}: {plan_dict.get('account_size', '?')} (${plan.get('price_raw', '?')})")
             
-            # Show plan names if available
-            if plan_count > 0:
-                plan_names = [p.get('plan_name', 'Unknown') for p in data.get('plans', [])]
-                print(f"  Plan names: {', '.join(plan_names)}")
+            # Small delay between passes
+            if pass_idx < len(passes) - 1:
+                time.sleep(1)
 
-        # Flatten plans and enrich with metadata
-        for plan in data.get("plans", []):
-            plan_dict = dict(plan)
-            plan_dict["business_name"] = data.get("business_name", "")
-            plan_dict["discount_code"] = data.get("discount_code", "")
-            plan_dict["trustpilot_score"] = data.get("trustpilot_score", "")
-            plan_dict["source_url"] = url
-
-            if "account_size" in plan_dict:
-                original_value = plan_dict["account_size"]
-                plan_dict["account_size"] = convert_k_to_thousands(original_value)
-                if original_value != plan_dict["account_size"]:
-                    print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
-            else:
-                print(f"  Warning: account_size missing for plan '{plan_dict.get('plan_name','?')}'")
-
-            all_plans.append(plan_dict)
-
-    except Exception as e:
-        print(f"  Error scraping {url}: {e}")
-        import traceback
-        traceback.print_exc()
+        except Exception as e:
+            print(f"    ✗ Error in pass: {e}")
+    
+    print(f"\n  Total plans from {site_name}: {site_plans_count}")
+    time.sleep(2)  # Delay between sites
 
 # -----------------------------
 # Save results
 # -----------------------------
+print(f"\n{'='*60}")
 if all_plans:
     plans_df = pd.DataFrame(all_plans)
     plans_df.to_csv("plans_output.csv", index=False)
-    print(f"\n{'='*60}")
-    print(f"Scraping completed! Saved plans_output.csv with {len(plans_df)} plans")
+    print(f"✓ SUCCESS! Saved plans_output.csv with {len(plans_df)} plans")
     print(f"{'='*60}")
 
     # Show breakdown by site
-    print("\nPlans found per site:")
-    for url in urls:
+    print("\n📊 Summary by Site:")
+    print("-" * 60)
+    for site_config in sites_config:
+        site_name = site_config["name"]
+        url = site_config["url"]
         site_plans = [p for p in all_plans if p.get("source_url") == url]
         count = len(site_plans)
-        business_name = site_plans[0].get("business_name", "Unknown") if site_plans else "Unknown"
-        print(f"  {business_name}: {count} plans")
+        print(f"\n{site_name}: {count} plans")
         if site_plans:
             for p in site_plans:
-                print(f"    - {p.get('plan_name', '?')} ({p.get('account_size', '?')})")
+                plan_name = p.get('plan_name', '?')
+                account_size = p.get('account_size', '?')
+                price = p.get('price_raw', '?')
+                print(f"  • {plan_name}: {account_size} @ ${price}")
 
     # Show unique account sizes
     if 'account_size' in plans_df.columns:
-        print("\nAll unique account sizes found:")
+        print(f"\n📈 All Unique Account Sizes:")
+        print("-" * 60)
         unique_sizes = sorted(plans_df['account_size'].dropna().unique())
         for size in unique_sizes:
             count = len(plans_df[plans_df['account_size'] == size])
             print(f"  {size}: {count} plans")
 else:
-    print("\nNo plans were scraped. CSV not created.")
-    print("Check the errors above for debugging information.")
+    print("✗ No plans were scraped.")
+    print(f"{'='*60}")
