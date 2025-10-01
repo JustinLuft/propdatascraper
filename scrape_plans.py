@@ -1,17 +1,13 @@
-# scrape_plans.py
-
-# Imports
-from firecrawl import JsonConfig, FirecrawlApp
+from firecrawl import Firecrawl
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
 import re
 import os
-import json
 
 # Initialize Firecrawl
 api_key = os.getenv("FIRECRAWL_API_KEY")
-app = FirecrawlApp(api_key=api_key)
+app = Firecrawl(api_key=api_key)
 
 # Define the schema for each plan
 class Plan(BaseModel):
@@ -33,7 +29,7 @@ class ExtractSchema(BaseModel):
     trustpilot_score: str
     plans: List[Plan]
 
-# Convert K notation to full numbers
+# Function to convert K notation to full numbers
 def convert_k_to_thousands(value):
     if not isinstance(value, str):
         return value
@@ -41,14 +37,8 @@ def convert_k_to_thousands(value):
     def replace_k(match):
         number = match.group(1)
         num_value = float(number) * 1000
-        if num_value.is_integer():
-            return f"{int(num_value):,}"
-        else:
-            return f"{num_value:,.1f}"
+        return f"{int(num_value):,}" if num_value.is_integer() else f"{num_value:,.1f}"
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
-
-# Config for JSON extraction
-json_config = JsonConfig(schema=ExtractSchema)
 
 # List of URLs to scrape
 urls = [
@@ -60,49 +50,50 @@ urls = [
     "https://www.topstep.com/",
 ]
 
+# Collect all scraped plan data here
 all_plans = []
 
 for url in urls:
     print(f"Scraping {url} ...")
     try:
-        response = app.extract(
+        response = app.scrape(
             url=url,
-            config=json_config,
+            formats=["json"],
             only_main_content=False,
             timeout=120000
         )
-
-        parsed_response = response.model_dump()  # dict
-
-        if parsed_response and "plans" in parsed_response:
-            data = parsed_response
-            print(f"  Found {len(data['plans'])} plans for {url}")
-
-            for plan in data.get("plans", []):
+        data = response.get("json", {})
+        if data:
+            for plan in data.get('plans', []):
                 plan_dict = dict(plan)
-                plan_dict["business_name"] = data.get("business_name", "")
-                plan_dict["discount_code"] = data.get("discount_code", "")
-                plan_dict["trustpilot_score"] = data.get("trustpilot_score", "")
-                plan_dict["source_url"] = url
-
-                if "account_size" in plan_dict:
-                    original_value = plan_dict["account_size"]
+                plan_dict['business_name'] = data.get('business_name', '')
+                plan_dict['discount_code'] = data.get('discount_code', '')
+                plan_dict['trustpilot_score'] = data.get('trustpilot_score', '')
+                plan_dict['source_url'] = url
+                if 'account_size' in plan_dict:
+                    original_value = plan_dict['account_size']
                     converted_value = convert_k_to_thousands(original_value)
-                    plan_dict["account_size"] = converted_value
+                    plan_dict['account_size'] = converted_value
                     if original_value != converted_value:
-                        print(f"    Converted account_size: '{original_value}' -> '{converted_value}'")
-
+                        print(f"  Converted account_size: '{original_value}' -> '{converted_value}'")
                 all_plans.append(plan_dict)
-        else:
-            print(f"  No plans found for {url}")
-
     except Exception as e:
         print(f"Error scraping {url}: {e}")
 
-# Save results
+# Convert all collected plans to a single DataFrame
 plans_df = pd.DataFrame(all_plans)
+
+# Display top rows
 print("\nFirst few rows of scraped data:")
 print(plans_df.head())
 
+# Save to CSV file
 plans_df.to_csv("plans_output.csv", index=False)
 print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
+
+# Optional: Show any account_size values that were converted
+if len(plans_df) > 0 and 'account_size' in plans_df.columns:
+    print(f"\nAccount size values found:")
+    for idx, size in enumerate(plans_df['account_size'].unique()):
+        if pd.notna(size):
+            print(f"  {size}")
