@@ -1,17 +1,21 @@
-# Install Firecrawl
+# scrape_plans.py
+
 # Imports
-from firecrawl import JsonConfig, FirecrawlApp
+from firecrawl import FirecrawlApp
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
 import re
+import os
+import json
 
 # Initialize Firecrawl
-import os
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
+# ------------------------------
 # Define the schema for each plan
+# ------------------------------
 class Plan(BaseModel):
     plan_name: str
     account_type: str
@@ -22,16 +26,17 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # <-- New field added here
+    drawdown_mode: str  # <-- New field
 
-# Define the overall schema including multiple plans
 class ExtractSchema(BaseModel):
     business_name: str
     discount_code: str
     trustpilot_score: str
     plans: List[Plan]
 
-# Function to convert K notation to full numbers
+# ------------------------------
+# Helper: Convert K notation
+# ------------------------------
 def convert_k_to_thousands(value):
     """
     Convert values like '50K' to '50,000'
@@ -40,30 +45,21 @@ def convert_k_to_thousands(value):
     if not isinstance(value, str):
         return value
     
-    # Pattern to match numbers followed by K (case insensitive)
-    # This preserves any currency symbols or other text
     pattern = r'(\d+(?:\.\d+)?)K'
     
     def replace_k(match):
         number = match.group(1)
-        # Convert to float, multiply by 1000, then format with commas
         num_value = float(number) * 1000
-        # Format as integer if it's a whole number, otherwise keep decimal
         if num_value.is_integer():
             return f"{int(num_value):,}"
         else:
             return f"{num_value:,.1f}"
     
-    # Replace all occurrences of the pattern
-    result = re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
-    return result
+    return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
-# Create JSON extraction config
-json_config = JsonConfig(
-    schema=ExtractSchema
-)
-
+# ------------------------------
 # List of URLs to scrape
+# ------------------------------
 urls = [
     "https://rightlinefunding.com/",
     "https://tradeify.co/",
@@ -71,32 +67,27 @@ urls = [
     "https://myfundedfutures.com/",
     "https://thelegendstrading.com/",
     "https://www.topstep.com/",
-    # Add more URLs here
-    # "https://anotherwebsite.com/plans",
 ]
 
-# Collect all scraped plan data here
 all_plans = []
 
+# ------------------------------
+# Scraping loop
+# ------------------------------
 for url in urls:
     print(f"Scraping {url} ...")
     try:
         response = app.scrape_url(
             url=url,
             formats=["json"],
-            json_options=json_config,
+            extract_schema=ExtractSchema,  # ✅ new way
             only_main_content=False,
             timeout=120000
         )
-        
-        # FIX: Handle the ScrapeResponse object properly
-        import json
-        
-        # The response.json() returns a JSON string, we need to parse it
-        json_string = response.model_dump_json()
-        parsed_response = json.loads(json_string)
-        
-        # The extracted data is in the 'json_field' key according to your debug output
+
+        parsed_response = json.loads(response.model_dump_json())
+
+        # Try to get extracted JSON
         if 'json_field' in parsed_response and parsed_response['json_field']:
             data = parsed_response['json_field']
             print(f"  Using parsed json_field for {url}")
@@ -104,64 +95,51 @@ for url in urls:
             data = parsed_response['extract']
             print(f"  Using parsed extract for {url}")
         else:
-            # Fallback to the entire parsed response
             data = parsed_response
             print(f"  Using entire parsed response for {url}")
         
-        # Debug: Print the type and structure of data
+        # Debug info
         print(f"  Data type: {type(data)}")
         if isinstance(data, dict):
             print(f"  Data keys: {list(data.keys())}")
-            # Print first few characters of key values for debugging
-            for key, value in list(data.items())[:3]:
-                preview = str(value)[:50] if value else "None"
-                print(f"    {key}: {preview}...")
-        else:
-            print(f"  Data content preview: {str(data)[:200]}...")
-        
-        # Flatten and enrich each plan with overall metadata
+
+        # Flatten and enrich plans
         for plan in data.get('plans', []):
             plan_dict = dict(plan)
             plan_dict['business_name'] = data.get('business_name', '')
             plan_dict['discount_code'] = data.get('discount_code', '')
             plan_dict['trustpilot_score'] = data.get('trustpilot_score', '')
-            plan_dict['source_url'] = url  # Optional: keep track of source
+            plan_dict['source_url'] = url
             
-            # Convert K notation in account_size field
             if 'account_size' in plan_dict:
                 original_value = plan_dict['account_size']
                 converted_value = convert_k_to_thousands(original_value)
                 plan_dict['account_size'] = converted_value
-                
-                # Optional: Print conversion for debugging
                 if original_value != converted_value:
                     print(f"  Converted account_size: '{original_value}' -> '{converted_value}'")
             
             all_plans.append(plan_dict)
-            
+
     except Exception as e:
         print(f"Error scraping {url}: {e}")
-        # Additional debugging information
         try:
             print(f"  Response type: {type(response)}")
             print(f"  Response attributes: {dir(response)}")
         except:
             pass
 
-# Convert all collected plans to a single DataFrame
+# ------------------------------
+# Save results
+# ------------------------------
 plans_df = pd.DataFrame(all_plans)
 
-# Display top rows
 print("\nFirst few rows of scraped data:")
 print(plans_df.head())
 
-# Save to CSV file
 plans_df.to_csv("plans_output.csv", index=False)
 print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
 
-# Optional: Show any account_size values that were converted
 if len(plans_df) > 0 and 'account_size' in plans_df.columns:
     print(f"\nAccount size values found:")
-    for idx, size in enumerate(plans_df['account_size'].unique()):
-        if pd.notna(size):
-            print(f"  {size}")
+    for size in plans_df['account_size'].dropna().unique():
+        print(f"  {size}")
