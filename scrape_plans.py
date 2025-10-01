@@ -1,7 +1,7 @@
 # scrape_plans.py
 
 # Imports
-from firecrawl import FirecrawlApp
+from firecrawl import JsonConfig, FirecrawlApp
 from pydantic import BaseModel
 from typing import List
 import pandas as pd
@@ -13,9 +13,7 @@ import json
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
-# ------------------------------
 # Define the schema for each plan
-# ------------------------------
 class Plan(BaseModel):
     plan_name: str
     account_type: str
@@ -26,27 +24,20 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # <-- New field
+    drawdown_mode: str
 
+# Define the overall schema including multiple plans
 class ExtractSchema(BaseModel):
     business_name: str
     discount_code: str
     trustpilot_score: str
     plans: List[Plan]
 
-# ------------------------------
-# Helper: Convert K notation
-# ------------------------------
+# Convert K notation to full numbers
 def convert_k_to_thousands(value):
-    """
-    Convert values like '50K' to '50,000'
-    Handles various formats and preserves currency symbols
-    """
     if not isinstance(value, str):
         return value
-    
     pattern = r'(\d+(?:\.\d+)?)K'
-    
     def replace_k(match):
         number = match.group(1)
         num_value = float(number) * 1000
@@ -54,12 +45,12 @@ def convert_k_to_thousands(value):
             return f"{int(num_value):,}"
         else:
             return f"{num_value:,.1f}"
-    
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
-# ------------------------------
+# Config for JSON extraction
+json_config = JsonConfig(schema=ExtractSchema)
+
 # List of URLs to scrape
-# ------------------------------
 urls = [
     "https://rightlinefunding.com/",
     "https://tradeify.co/",
@@ -71,75 +62,47 @@ urls = [
 
 all_plans = []
 
-# ------------------------------
-# Scraping loop
-# ------------------------------
 for url in urls:
     print(f"Scraping {url} ...")
     try:
-        response = app.scrape_url(
+        response = app.extract(
             url=url,
-            formats=["json"],
-            extract_schema=ExtractSchema,  # ✅ new way
+            config=json_config,
             only_main_content=False,
             timeout=120000
         )
 
-        parsed_response = json.loads(response.model_dump_json())
+        parsed_response = response.model_dump()  # dict
 
-        # Try to get extracted JSON
-        if 'json_field' in parsed_response and parsed_response['json_field']:
-            data = parsed_response['json_field']
-            print(f"  Using parsed json_field for {url}")
-        elif 'extract' in parsed_response and parsed_response['extract']:
-            data = parsed_response['extract']
-            print(f"  Using parsed extract for {url}")
-        else:
+        if parsed_response and "plans" in parsed_response:
             data = parsed_response
-            print(f"  Using entire parsed response for {url}")
-        
-        # Debug info
-        print(f"  Data type: {type(data)}")
-        if isinstance(data, dict):
-            print(f"  Data keys: {list(data.keys())}")
+            print(f"  Found {len(data['plans'])} plans for {url}")
 
-        # Flatten and enrich plans
-        for plan in data.get('plans', []):
-            plan_dict = dict(plan)
-            plan_dict['business_name'] = data.get('business_name', '')
-            plan_dict['discount_code'] = data.get('discount_code', '')
-            plan_dict['trustpilot_score'] = data.get('trustpilot_score', '')
-            plan_dict['source_url'] = url
-            
-            if 'account_size' in plan_dict:
-                original_value = plan_dict['account_size']
-                converted_value = convert_k_to_thousands(original_value)
-                plan_dict['account_size'] = converted_value
-                if original_value != converted_value:
-                    print(f"  Converted account_size: '{original_value}' -> '{converted_value}'")
-            
-            all_plans.append(plan_dict)
+            for plan in data.get("plans", []):
+                plan_dict = dict(plan)
+                plan_dict["business_name"] = data.get("business_name", "")
+                plan_dict["discount_code"] = data.get("discount_code", "")
+                plan_dict["trustpilot_score"] = data.get("trustpilot_score", "")
+                plan_dict["source_url"] = url
+
+                if "account_size" in plan_dict:
+                    original_value = plan_dict["account_size"]
+                    converted_value = convert_k_to_thousands(original_value)
+                    plan_dict["account_size"] = converted_value
+                    if original_value != converted_value:
+                        print(f"    Converted account_size: '{original_value}' -> '{converted_value}'")
+
+                all_plans.append(plan_dict)
+        else:
+            print(f"  No plans found for {url}")
 
     except Exception as e:
         print(f"Error scraping {url}: {e}")
-        try:
-            print(f"  Response type: {type(response)}")
-            print(f"  Response attributes: {dir(response)}")
-        except:
-            pass
 
-# ------------------------------
 # Save results
-# ------------------------------
 plans_df = pd.DataFrame(all_plans)
-
 print("\nFirst few rows of scraped data:")
 print(plans_df.head())
 
 plans_df.to_csv("plans_output.csv", index=False)
 print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
-
-if len(plans_df) > 0 and 'account_size' in plans_df.columns:
-    print(f"\nAccount size values found:")
-    for size in plans_df['account_size'].dropna().unique():
-        print(f"  {size}")
