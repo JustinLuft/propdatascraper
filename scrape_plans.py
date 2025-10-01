@@ -56,96 +56,58 @@ def convert_k_to_thousands(value):
 
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
-# -----------------------------
-# JavaScript to intelligently find and click tabs
-# -----------------------------
-click_all_tabs_script = """
-(function() {
-    const clicked = new Set();
-    const clicks = [];
+def generate_click_actions():
+    """Generate a comprehensive list of click actions for common tab patterns"""
+    actions = []
     
-    // Helper to click element and track it
-    function clickElement(el) {
-        if (!el || clicked.has(el)) return false;
+    # Common tab selectors - try to click each one
+    selectors = [
+        # Generic tab patterns
+        'button[role="tab"]',
+        'a[role="tab"]',
+        '[data-tab]',
+        '[data-tabs]',
         
-        try {
-            // Scroll into view
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Wait a moment for scroll
-            setTimeout(() => {
-                el.click();
-                clicked.add(el);
-                console.log('Clicked:', el.textContent?.trim() || el.className);
-            }, 100);
-            
-            return true;
-        } catch(e) {
-            console.log('Click failed:', e);
-            return false;
-        }
-    }
-    
-    // Strategy 1: Find buttons with role="tab"
-    document.querySelectorAll('button[role="tab"], a[role="tab"]').forEach(el => {
-        if (clickElement(el)) clicks.push('role-tab');
-    });
-    
-    // Strategy 2: Find elements with "tab" in class name
-    document.querySelectorAll('[class*="tab" i]').forEach(el => {
-        if ((el.tagName === 'BUTTON' || el.tagName === 'A') && 
-            el.offsetParent !== null) { // is visible
-            if (clickElement(el)) clicks.push('class-tab');
-        }
-    });
-    
-    // Strategy 3: Find buttons with data-tab attribute
-    document.querySelectorAll('[data-tab], [data-tabs]').forEach(el => {
-        if (clickElement(el)) clicks.push('data-tab');
-    });
-    
-    // Strategy 4: Look for plan/pricing related text in buttons/links
-    const planKeywords = ['core', 'scale', 'pro', 'basic', 'advanced', 'premium', 
-                          'starter', 'growth', 'lightning', '25k', '50k', '100k', '150k'];
-    
-    document.querySelectorAll('button, a').forEach(el => {
-        const text = el.textContent?.toLowerCase() || '';
-        const hasKeyword = planKeywords.some(kw => text.includes(kw));
+        # Class-based patterns
+        'button[class*="tab"]',
+        'a[class*="tab"]',
         
-        if (hasKeyword && el.offsetParent !== null && text.length < 50) {
-            if (clickElement(el)) clicks.push('keyword-match');
-        }
-    });
+        # Common pricing page patterns
+        'button[class*="plan"]',
+        'a[class*="plan"]',
+        
+        # Specific selectors for known sites
+        'button.font-bold.rounded-lg',  # MyFunded Futures
+        'a.link-button.w-inline-block',  # Tradeify
+        
+        # Look for grouped buttons (often tabs)
+        'nav button',
+        '[role="tablist"] button',
+        '[role="tablist"] a',
+        
+        # Additional patterns
+        'button[class*="inline-block"]',
+        'a[class*="inline-block"]',
+    ]
     
-    // Strategy 5: Find sibling buttons that look like tabs (grouped buttons)
-    const buttonGroups = new Map();
-    document.querySelectorAll('button').forEach(btn => {
-        if (btn.offsetParent === null) return; // skip hidden
-        const parent = btn.parentElement;
-        if (!buttonGroups.has(parent)) {
-            buttonGroups.set(parent, []);
-        }
-        buttonGroups.get(parent).push(btn);
-    });
+    # For each selector, add click + wait
+    for selector in selectors:
+        actions.append({
+            "type": "click",
+            "selector": selector
+        })
+        actions.append({
+            "type": "wait",
+            "milliseconds": 800
+        })
     
-    buttonGroups.forEach((buttons, parent) => {
-        // If parent has 2-5 buttons, they're likely tabs
-        if (buttons.length >= 2 && buttons.length <= 5) {
-            buttons.forEach(btn => {
-                if (clickElement(btn)) clicks.push('button-group');
-            });
-        }
-    });
+    # Add a final longer wait to let all content load
+    actions.append({
+        "type": "wait",
+        "milliseconds": 2000
+    })
     
-    console.log('Total click strategies used:', [...new Set(clicks)]);
-    console.log('Total unique elements clicked:', clicked.size);
-    
-    return {
-        clicked: clicked.size,
-        strategies: [...new Set(clicks)]
-    };
-})();
-"""
+    return actions
 
 # -----------------------------
 # URLs to scrape
@@ -162,27 +124,21 @@ urls = [
 all_plans = []
 
 # -----------------------------
-# Scraping Loop with intelligent tab detection
+# Scraping Loop
 # -----------------------------
 for url in urls:
     print(f"\nScraping {url} ...")
     try:
-        # Scrape with dynamic JavaScript-based clicking
+        # Generate actions list
+        actions = generate_click_actions()
+        
+        # Scrape the page
         doc = app.scrape(
             url=url,
             formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
             timeout=120000,
-            actions=[
-                {
-                    "type": "execute",
-                    "script": click_all_tabs_script
-                },
-                {
-                    "type": "wait",
-                    "milliseconds": 2000  # Wait for content to load after all clicks
-                }
-            ]
+            actions=actions
         )
 
         data = doc.json
@@ -194,7 +150,13 @@ for url in urls:
         print(f"  Data type: {type(data)}")
         if isinstance(data, dict):
             print(f"  Data keys: {list(data.keys())}")
-            print(f"  Found {len(data.get('plans', []))} plans")
+            plan_count = len(data.get('plans', []))
+            print(f"  Found {plan_count} plans")
+            
+            # Show plan names if available
+            if plan_count > 0:
+                plan_names = [p.get('plan_name', 'Unknown') for p in data.get('plans', [])]
+                print(f"  Plan names: {', '.join(plan_names)}")
 
         # Flatten plans and enrich with metadata
         for plan in data.get("plans", []):
@@ -225,19 +187,28 @@ for url in urls:
 if all_plans:
     plans_df = pd.DataFrame(all_plans)
     plans_df.to_csv("plans_output.csv", index=False)
-    print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
+    print(f"\n{'='*60}")
+    print(f"Scraping completed! Saved plans_output.csv with {len(plans_df)} plans")
+    print(f"{'='*60}")
 
     # Show breakdown by site
     print("\nPlans found per site:")
     for url in urls:
-        count = len([p for p in all_plans if p.get("source_url") == url])
-        business_name = next((p.get("business_name") for p in all_plans if p.get("source_url") == url), "Unknown")
-        print(f"  {business_name}: {count} plans ({url})")
+        site_plans = [p for p in all_plans if p.get("source_url") == url]
+        count = len(site_plans)
+        business_name = site_plans[0].get("business_name", "Unknown") if site_plans else "Unknown"
+        print(f"  {business_name}: {count} plans")
+        if site_plans:
+            for p in site_plans:
+                print(f"    - {p.get('plan_name', '?')} ({p.get('account_size', '?')})")
 
-    # Optional: show unique account sizes
+    # Show unique account sizes
     if 'account_size' in plans_df.columns:
-        print("\nAccount size values found:")
-        for size in sorted(plans_df['account_size'].dropna().unique()):
-            print(f"  {size}")
+        print("\nAll unique account sizes found:")
+        unique_sizes = sorted(plans_df['account_size'].dropna().unique())
+        for size in unique_sizes:
+            count = len(plans_df[plans_df['account_size'] == size])
+            print(f"  {size}: {count} plans")
 else:
     print("\nNo plans were scraped. CSV not created.")
+    print("Check the errors above for debugging information.")
