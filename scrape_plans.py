@@ -39,20 +39,12 @@ class ExtractSchema(BaseModel):
 # Helper Functions
 # -----------------------------
 def convert_k_to_thousands(value):
-    """Convert '50K' -> '50,000', preserving currency symbols."""
     if not isinstance(value, str):
         return value
-
     pattern = r'(\d+(?:\.\d+)?)K'
-
     def replace_k(match):
-        number = match.group(1)
-        num_value = float(number) * 1000
-        if num_value.is_integer():
-            return f"{int(num_value):,}"
-        else:
-            return f"{num_value:,.1f}"
-
+        num = float(match.group(1)) * 1000
+        return f"{int(num):,}" if num.is_integer() else f"{num:,.1f}"
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
 # -----------------------------
@@ -75,19 +67,30 @@ all_plans = []
 for url in urls:
     print(f"\nScraping {url} ...")
     try:
+        # Step 1: Click all tab elements
+        app.scrape(
+            url=url,
+            formats=[],
+            only_main_content=False,
+            timeout=180000,
+            actions={ "click": '[class*="tab"]' }
+        )
+
+        # Step 2: Wait 5 seconds for content to load
+        app.scrape(
+            url=url,
+            formats=[],
+            only_main_content=False,
+            timeout=180000,
+            actions={ "wait": 5000 }
+        )
+
+        # Step 3: Extract the data according to your schema
         doc = app.scrape(
             url=url,
             formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
-            timeout=180000,  # 3 minutes
-            actions=[
-                {
-                    "click": '[class*="tab"]'  # click all tab elements
-                },
-                {
-                    "wait": 5000  # wait 5 seconds after clicking tabs
-                }
-            ]
+            timeout=180000
         )
 
         data = doc.json
@@ -95,15 +98,10 @@ for url in urls:
             print(f"  No data returned for {url}")
             continue
 
-        # Debug: show keys
-        print(f"  Data type: {type(data)}")
-        if isinstance(data, dict):
-            print(f"  Data keys: {list(data.keys())}")
-            for key, value in list(data.items())[:3]:
-                preview = str(value)[:50] if value else "None"
-                print(f"    {key}: {preview}...")
+        # Debug info
+        print(f"  Data keys: {list(data.keys())}")
 
-        # Flatten plans and enrich with metadata
+        # Flatten plans
         for plan in data.get("plans", []):
             plan_dict = dict(plan)
             plan_dict["business_name"] = data.get("business_name", "")
@@ -112,34 +110,19 @@ for url in urls:
             plan_dict["source_url"] = url
 
             if "account_size" in plan_dict:
-                original_value = plan_dict["account_size"]
-                plan_dict["account_size"] = convert_k_to_thousands(original_value)
-                if original_value != plan_dict["account_size"]:
-                    print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
-            else:
-                print(f"  Warning: account_size missing for plan '{plan_dict.get('plan_name','?')}'")
-
+                original = plan_dict["account_size"]
+                plan_dict["account_size"] = convert_k_to_thousands(original)
             all_plans.append(plan_dict)
 
     except Exception as e:
         print(f"  Error scraping {url}: {e}")
-        try:
-            print(f"    doc type: {type(doc)}")
-            print(f"    doc attributes: {dir(doc)}")
-        except:
-            pass
 
 # -----------------------------
 # Save results
 # -----------------------------
 if all_plans:
-    plans_df = pd.DataFrame(all_plans)
-    plans_df.to_csv("plans_output.csv", index=False)
-    print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
-
-    if 'account_size' in plans_df.columns:
-        print("\nAccount size values found:")
-        for size in plans_df['account_size'].dropna().unique():
-            print(f"  {size}")
+    df = pd.DataFrame(all_plans)
+    df.to_csv("plans_output.csv", index=False)
+    print(f"\nScraping completed, saved {len(df)} plans to plans_output.csv")
 else:
     print("\nNo plans were scraped. CSV not created.")
