@@ -1,8 +1,8 @@
 plan_name,account_type,account_size,price_raw,profit_goal,trailing_drawdown,daily_loss_limit,activation_fee,reset_fee,drawdown_mode,business_name,discount_code,trustpilot_score,source_url
-$50K Evaluation Account,Evaluation,"$50,000",$29,"$3,000","$2,000",,$99,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,4.7,https://rightlinefunding.com/
-$50K SIM Funded Account,SIM Funded,"$50,000",$299,"$3,000","$2,000",,,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,4.7,https://rightlinefunding.com/
-$150K Evaluation Account,Evaluation,"$150,000",$99,"$9,000","$5,000",,$99,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,4.7,https://rightlinefunding.com/
-$150K SIM Funded Account,SIM Funded,"$150,000",$449,"$9,000","$5,000",,,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,4.7,https://rightlinefunding.com/
+$50K Evaluation Account,Evaluation,"$50,000",$29,"$3,000","$2,000",,$99,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+$50K SIM Funded Account,SIM Funded,"$50,000",$299,"$3,000","$2,000",,,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+$150K Evaluation Account,Evaluation,"$150,000",$99,"$9,000","$5,000",,$99,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
+$150K SIM Funded Account,SIM Funded,"$150,000",$449,"$9,000","$5,000",,,,Intraday Trailing,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
 $25k account,Instant Funding,"$25,000",$349,"$3,000","$1,000",,$0,$85,End Of Day,Tradeify,AUG,4.7,https://tradeify.co/
 $50k account,Instant Funding,"$50,000",$509,"$6,000","$2,000","$1,250",$0,$169,End Of Day,Tradeify,AUG,4.7,https://tradeify.co/
 $100k account,Instant Funding,"$100,000",$629,"$9,000","$4,000","$2,500",$0,$169,End Of Day,Tradeify,AUG,4.7,https://tradeify.co/
@@ -31,9 +31,9 @@ $150k account,Monthly Fee,"$150,000",$339,"$9,000","$5,000","$3,750",$0,$197,End
 250K FULL,Tradovate,"$250,000",$497/Month,"$15,000","$6,500",,Included,$100/Reset/No Limit,,Apex Trader Funding,80% Off Evals,4.5,https://apextraderfunding.com/
 300K FULL,Tradovate,"$300,000",$597/Month,"$20,000","$7,500",,Included,$100/Reset/No Limit,,Apex Trader Funding,80% Off Evals,4.5,https://apextraderfunding.com/
 100K STATIC,Tradovate,"$100,000",$157/Month,"$2,000",$625,,Included,$100/Reset/No Limit,,Apex Trader Funding,80% Off Evals,4.5,https://apextraderfunding.com/
-Starter,Sim Funded,"$50,000",$127 / month,"$3,000","$2,000",$0,$0,,EOD,MyFundedFutures,,4.9,https://myfundedfutures.com/
-Starter Plus,Sim Funded,"$100,000",$267 / month,"$6,000","$3,000",$0,$0,,EOD,MyFundedFutures,,4.9,https://myfundedfutures.com/
-Expert,Sim Funded,"$150,000",$377 / month,"$9,000","$4,500",$0,$0,,EOD,MyFundedFutures,,4.9,https://myfundedfutures.com/
+Starter,Sim Funded,"$50,000",$127 / month,"$3,000","$2,000",$0,$0,,EOD,MyFundedFutures,,4.5,https://myfundedfutures.com/
+Starter Plus,Sim Funded,"$100,000",$267 / month,"$6,000","$3,000",$0,$0,,EOD,MyFundedFutures,,4.5,https://myfundedfutures.com/
+Expert,Sim Funded,"$150,000",$377 / month,"$9,000","$4,500",$0,$0,,EOD,MyFundedFutures,,4.5,https://myfundedfutures.com/
 "$25,000",Apprentice,Max 4 contracts / 40 micros,$165/Month,"$1,500","$1,500 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
 "$50,000",Apprentice,Max 10 contracts / 50 micros,$185/Month,"$3,000","$2,000 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
 "$100,000",Apprentice,Max 14 contracts / 70 micros,$225/Month,"$6,000","$3,000 EOD trailing max loss",,,,5 days,Legends Trading,,2.9,https://thelegendstrading.com/
