@@ -1,6 +1,7 @@
 # scrape_plans.py
+# Install Firecrawl
+# pip install firecrawl
 
-# Imports
 from firecrawl import FirecrawlApp
 from pydantic import BaseModel
 from typing import List
@@ -12,9 +13,9 @@ import os
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
-# ---------------------------
+# -----------------------------
 # Define Schemas
-# ---------------------------
+# -----------------------------
 class Plan(BaseModel):
     plan_name: str
     account_type: str
@@ -25,7 +26,7 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # New field
+    drawdown_mode: str  # New field added
 
 class ExtractSchema(BaseModel):
     business_name: str
@@ -33,21 +34,29 @@ class ExtractSchema(BaseModel):
     trustpilot_score: str
     plans: List[Plan]
 
-# ---------------------------
-# Helper function to convert K notation
-# ---------------------------
+# -----------------------------
+# Helper Functions
+# -----------------------------
 def convert_k_to_thousands(value):
+    """Convert '50K' -> '50,000', preserving currency symbols."""
     if not isinstance(value, str):
         return value
+    
     pattern = r'(\d+(?:\.\d+)?)K'
+    
     def replace_k(match):
-        num_value = float(match.group(1)) * 1000
-        return f"{int(num_value):,}" if num_value.is_integer() else f"{num_value:,.1f}"
+        number = match.group(1)
+        num_value = float(number) * 1000
+        if num_value.is_integer():
+            return f"{int(num_value):,}"
+        else:
+            return f"{num_value:,.1f}"
+    
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
-# ---------------------------
+# -----------------------------
 # URLs to scrape
-# ---------------------------
+# -----------------------------
 urls = [
     "https://rightlinefunding.com/",
     "https://tradeify.co/",
@@ -57,15 +66,14 @@ urls = [
     "https://www.topstep.com/",
 ]
 
-# ---------------------------
-# Collect all plan data
-# ---------------------------
 all_plans = []
 
+# -----------------------------
+# Scraping Loop
+# -----------------------------
 for url in urls:
     print(f"Scraping {url} ...")
     try:
-        # Scrape the page using Firecrawl
         doc = app.scrape(
             url=url,
             formats=[{
@@ -76,14 +84,14 @@ for url in urls:
             timeout=120000
         )
 
-        # Extract JSON from Document
-        data = doc.json()
+        # FIX: doc.json is a property, not a method
+        data = doc.json
 
         if not data:
             print(f"  No data returned for {url}")
             continue
 
-        # Flatten plans with overall metadata
+        # Flatten plans
         for plan in data.get("plans", []):
             plan_dict = dict(plan)
             plan_dict["business_name"] = data.get("business_name", "")
@@ -91,7 +99,7 @@ for url in urls:
             plan_dict["trustpilot_score"] = data.get("trustpilot_score", "")
             plan_dict["source_url"] = url
 
-            # Convert account_size K-values
+            # Convert K notation
             if "account_size" in plan_dict:
                 plan_dict["account_size"] = convert_k_to_thousands(plan_dict["account_size"])
 
@@ -100,14 +108,12 @@ for url in urls:
     except Exception as e:
         print(f"  Error scraping {url}: {e}")
 
-# ---------------------------
-# Convert to DataFrame and save CSV
-# ---------------------------
+# -----------------------------
+# Save to CSV
+# -----------------------------
 if all_plans:
     plans_df = pd.DataFrame(all_plans)
-    print("\nFirst few rows of scraped data:")
-    print(plans_df.head())
     plans_df.to_csv("plans_output.csv", index=False)
-    print(f"\nScraping completed, saved {len(plans_df)} plans to plans_output.csv")
+    print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
 else:
-    print("No plans were scraped. CSV not created.")
+    print("\nNo plans were scraped. CSV not created.")
