@@ -1,4 +1,4 @@
-# scrape_plans.py
+# scrape_plans_dynamic.py
 # pip install firecrawl pandas pydantic
 
 from firecrawl import FirecrawlApp
@@ -7,7 +7,6 @@ from typing import List
 import pandas as pd
 import re
 import os
-import json
 
 # -----------------------------
 # Initialize Firecrawl
@@ -81,16 +80,18 @@ for url in urls:
             url=url,
             formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
-            timeout=120000,
+            timeout=180000,  # 3 minutes
             actions=[
                 {
-                    # Dynamically click all elements that have "tab" in the class
-                    "click": "document.querySelectorAll('[class*=\"tab\"]')",
-                    "multiple": True,
-                    "delay": 1000  # 1 second wait after each click
+                    # Click all tabs dynamically
+                    "evaluate": """
+                        Array.from(document.querySelectorAll('[class*="tab"]')).forEach(el => el.click());
+                    """,
+                    "multiple": False,  # already clicking all
+                    "delay": 1500
                 }
             ],
-            wait_for=".plans-loaded"  # optional, remove or adjust if not present
+            wait_for=".plan-item"  # update selector based on site
         )
 
         data = doc.json
