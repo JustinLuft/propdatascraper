@@ -1,6 +1,5 @@
 # scrape_plans.py
-# Install Firecrawl
-# pip install firecrawl
+# pip install firecrawl pandas pydantic
 
 from firecrawl import FirecrawlApp
 from pydantic import BaseModel
@@ -8,8 +7,11 @@ from typing import List
 import pandas as pd
 import re
 import os
+import json
 
+# -----------------------------
 # Initialize Firecrawl
+# -----------------------------
 api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
@@ -26,7 +28,7 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # New field added
+    drawdown_mode: str  # New field
 
 class ExtractSchema(BaseModel):
     business_name: str
@@ -41,9 +43,9 @@ def convert_k_to_thousands(value):
     """Convert '50K' -> '50,000', preserving currency symbols."""
     if not isinstance(value, str):
         return value
-    
+
     pattern = r'(\d+(?:\.\d+)?)K'
-    
+
     def replace_k(match):
         number = match.group(1)
         num_value = float(number) * 1000
@@ -51,7 +53,7 @@ def convert_k_to_thousands(value):
             return f"{int(num_value):,}"
         else:
             return f"{num_value:,.1f}"
-    
+
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
 # -----------------------------
@@ -69,10 +71,10 @@ urls = [
 all_plans = []
 
 # -----------------------------
-# Scraping Loop
+# Scraping Loop with detailed debug
 # -----------------------------
 for url in urls:
-    print(f"Scraping {url} ...")
+    print(f"\nScraping {url} ...")
     try:
         doc = app.scrape(
             url=url,
@@ -84,14 +86,24 @@ for url in urls:
             timeout=120000
         )
 
-        # FIX: doc.json is a property, not a method
+        # doc.json is a property, not callable
         data = doc.json
 
         if not data:
             print(f"  No data returned for {url}")
             continue
 
-        # Flatten plans
+        # Debug: print type & keys
+        print(f"  Data type: {type(data)}")
+        if isinstance(data, dict):
+            print(f"  Data keys: {list(data.keys())}")
+            for key, value in list(data.items())[:3]:
+                preview = str(value)[:50] if value else "None"
+                print(f"    {key}: {preview}...")
+        else:
+            print(f"  Data preview: {str(data)[:200]}...")
+
+        # Flatten plans and enrich with metadata
         for plan in data.get("plans", []):
             plan_dict = dict(plan)
             plan_dict["business_name"] = data.get("business_name", "")
@@ -101,19 +113,33 @@ for url in urls:
 
             # Convert K notation
             if "account_size" in plan_dict:
-                plan_dict["account_size"] = convert_k_to_thousands(plan_dict["account_size"])
+                original_value = plan_dict["account_size"]
+                plan_dict["account_size"] = convert_k_to_thousands(original_value)
+                if original_value != plan_dict["account_size"]:
+                    print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
 
             all_plans.append(plan_dict)
 
     except Exception as e:
         print(f"  Error scraping {url}: {e}")
+        try:
+            print(f"    doc type: {type(doc)}")
+            print(f"    doc attributes: {dir(doc)}")
+        except:
+            pass
 
 # -----------------------------
-# Save to CSV
+# Save results
 # -----------------------------
 if all_plans:
     plans_df = pd.DataFrame(all_plans)
     plans_df.to_csv("plans_output.csv", index=False)
     print(f"\nScraping completed, saved plans_output.csv with {len(plans_df)} plans")
+
+    # Optional: show unique account sizes
+    if 'account_size' in plans_df.columns:
+        print("\nAccount size values found:")
+        for size in plans_df['account_size'].dropna().unique():
+            print(f"  {size}")
 else:
     print("\nNo plans were scraped. CSV not created.")
