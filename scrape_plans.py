@@ -7,8 +7,6 @@ from typing import List
 import pandas as pd
 import re
 import os
-import json
-import time
 
 # -----------------------------
 # Initialize Firecrawl
@@ -72,25 +70,39 @@ urls = [
 all_plans = []
 
 # -----------------------------
-# Scraping Loop with dynamic tab handling
+# Scraping Loop with dynamic plan button clicks
 # -----------------------------
 for url in urls:
     print(f"\nScraping {url} ...")
     try:
-        # Initial scrape to detect tabs
-        initial_doc = app.scrape(
+        # Scrape page with dynamic clicks on all visible buttons
+        doc = app.scrape(
             url=url,
             formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
-            timeout=120000
+            timeout=120000,
+            actions=[
+                {
+                    "click": """
+                        Array.from(document.querySelectorAll('button')).filter(b => {
+                            const style = window.getComputedStyle(b);
+                            return b.innerText.trim() !== "" &&
+                                   style.display !== "none" &&
+                                   style.visibility !== "hidden";
+                        })
+                    """,
+                    "multiple": True,
+                    "delay": 1000
+                }
+            ]
         )
 
-        data = initial_doc.json
+        data = doc.json
         if not data:
             print(f"  No data returned for {url}")
             continue
 
-        # Debug: show initial keys
+        # Debug: show keys
         print(f"  Data type: {type(data)}")
         if isinstance(data, dict):
             print(f"  Data keys: {list(data.keys())}")
@@ -98,44 +110,7 @@ for url in urls:
                 preview = str(value)[:50] if value else "None"
                 print(f"    {key}: {preview}...")
 
-        # Step 1: Detect tab buttons dynamically (heuristic)
-        tab_selectors = []
-        try:
-            html = initial_doc.html
-            # Look for buttons or divs with "tab" in class
-            matches = re.findall(r'<(button|div)[^>]+class="[^"]*tab[^"]*"[^>]*>', html, re.IGNORECASE)
-            tab_selectors = list(set(matches))
-        except:
-            pass
-
-        actions = []
-        for idx, tag in enumerate(tab_selectors):
-            # Build generic selector (id or class)
-            match = re.search(r'(id|class)="([^"]+)"', tag)
-            if match:
-                attr, value = match.groups()
-                if attr == "id":
-                    selector = f"#{value}"
-                else:
-                    selector = f".{value.replace(' ', '.')}"
-                actions.append({"click": selector})
-
-        # Step 2: If tabs detected, click each one dynamically
-        if actions:
-            print(f"  Detected {len(actions)} tabs, clicking dynamically...")
-            doc = app.scrape(
-                url=url,
-                formats=[{"type": "json", "schema": ExtractSchema}],
-                only_main_content=False,
-                timeout=120000,
-                actions=actions,
-                wait_for=".plans-loaded"  # generic placeholder for loaded plans
-            )
-            data = doc.json
-        else:
-            print("  No dynamic tabs detected, scraping initial content only.")
-
-        # Step 3: Flatten plans and enrich with metadata
+        # Flatten plans and enrich with metadata
         for plan in data.get("plans", []):
             plan_dict = dict(plan)
             plan_dict["business_name"] = data.get("business_name", "")
@@ -156,8 +131,8 @@ for url in urls:
     except Exception as e:
         print(f"  Error scraping {url}: {e}")
         try:
-            print(f"    doc type: {type(initial_doc)}")
-            print(f"    doc attributes: {dir(initial_doc)}")
+            print(f"    doc type: {type(doc)}")
+            print(f"    doc attributes: {dir(doc)}")
         except:
             pass
 
