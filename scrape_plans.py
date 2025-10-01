@@ -83,15 +83,15 @@ for url in urls:
             timeout=180000,  # 3 minutes max
             actions=[
                 {
-                    # Click all tabs dynamically
                     "evaluate": """
-                        Array.from(document.querySelectorAll('[class*="tab"]')).forEach(el => el.click());
-                    """,
-                    "multiple": False,  # all tabs handled in evaluate
-                    "delay": 1500       # wait 1.5s after clicks
+                        Array.from(document.querySelectorAll('[class*="tab"]'))
+                             .forEach(el => el.click());
+                    """
+                },
+                {
+                    "wait": 2000  # wait 2 seconds for content to load after clicks
                 }
-            ],
-            wait_for=5000  # wait 5 seconds after last action for dynamic content
+            ]
         )
 
         data = doc.json
