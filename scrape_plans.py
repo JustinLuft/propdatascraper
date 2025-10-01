@@ -27,7 +27,7 @@ class Plan(BaseModel):
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # New field
+    drawdown_mode: str
 
 class ExtractSchema(BaseModel):
     business_name: str
@@ -70,26 +70,28 @@ urls = [
 all_plans = []
 
 # -----------------------------
-# Scraping Loop with dynamic tab handling
+# Scraping Loop with sequential tab clicks
 # -----------------------------
 for url in urls:
     print(f"\nScraping {url} ...")
     try:
-        # Scrape the page with dynamic tab clicks
+        # Scrape the page with sequential tab clicks
         doc = app.scrape(
             url=url,
             formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
-            timeout=180000,  # 3 minutes max
+            timeout=180000,
             actions=[
                 {
                     "evaluate": """
-                        Array.from(document.querySelectorAll('[class*="tab"]'))
-                             .forEach(el => el.click());
+                        // Sequentially click each tab 1.5s apart
+                        const tabs = Array.from(document.querySelectorAll('[class*="tab"]'));
+                        tabs.forEach((tab, i) => setTimeout(() => tab.click(), i * 1500));
                     """
                 },
                 {
-                    "wait": 2000  # wait 2 seconds for content to load after clicks
+                    # Wait long enough for all tabs to finish loading
+                    "wait": 1500 * 20  # 20 tabs max; adjust if needed
                 }
             ]
         )
