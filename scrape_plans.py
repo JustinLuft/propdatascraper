@@ -79,14 +79,13 @@ for url in urls:
             url=url,
             formats=[{"type": "json", "schema": ExtractSchema}],
             only_main_content=False,
-            timeout=180000,  # 3 minutes max
+            timeout=180000,  # 3 minutes
             actions=[
                 {
-                    "click": '[class*="tab"]',
-                    "multiple": True  # click all tabs dynamically
+                    "click": '[class*="tab"]'  # click all tab elements
                 },
                 {
-                    "wait": 5000  # wait 5 seconds for all tab content to load
+                    "wait": 5000  # wait 5 seconds after clicking tabs
                 }
             ]
         )
