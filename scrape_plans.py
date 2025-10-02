@@ -29,7 +29,7 @@ class Plan(BaseModel):
     drawdown: str  # The actual drawdown amount, e.g., "$2,000"
     daily_loss_limit: str
     activation_fee: str
-    reset_fee: str = Field(default="", description="The fee to reset a failed evaluation account. Look for terms like 'reset fee', 'evaluation reset', or 'reset cost'. Do NOT use crossed-out 'Was' prices from promotional pricing.")
+    reset_fee: str = Field(default="", description="The fee to reset a failed evaluation account. Look for sections labeled 'reset', 'evaluation reset', or similar. Extract ONLY explicitly labeled reset fees. NEVER use crossed-out, strikethrough, or 'Was' prices from plan pricing sections. If no reset fee is explicitly mentioned, leave empty.")
 
 class ExtractSchema(BaseModel):
     business_name: str
