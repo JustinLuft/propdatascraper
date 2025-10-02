@@ -3,6 +3,7 @@
 
 from firecrawl import FirecrawlApp
 from pydantic import BaseModel, Field
+from typing import Optional
 from typing import List
 import pandas as pd
 import re
@@ -28,7 +29,7 @@ class Plan(BaseModel):
     drawdown: str  # The actual drawdown amount, e.g., "$2,000"
     daily_loss_limit: str
     activation_fee: str
-    reset_fee: str = Field(default="", description="The fee to reset a failed account. Leave empty unless explicitly mentioned on the page.")
+    reset_fee: str = Field(default="", description="The fee to reset a failed evaluation account. Look for terms like 'reset fee', 'evaluation reset', or 'reset cost'. Do NOT use crossed-out 'Was' prices from promotional pricing.")
 
 class ExtractSchema(BaseModel):
     business_name: str
