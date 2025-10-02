@@ -22,24 +22,18 @@ class Plan(BaseModel):
     plan_name: str
     account_type: str
     account_size: str
-    price_raw: str = Field(description="The current price to purchase this plan. Only extract the actual purchase price, not crossed-out 'Was' prices.")
+    price_raw: str
     profit_goal: str
-    drawdown_type: str = Field(description="The type of drawdown rule, e.g., 'Intraday Trailing', 'End of Day', 'Static'. Only the rule type, not the amount.")
-    drawdown: str = Field(description="The drawdown amount with currency symbol, e.g., '$2,000'. Only the numeric amount, not the rule type.")
+    drawdown_type: str  # e.g., "Intraday Trailing", "End of Day", etc.
+    drawdown: str  # The actual drawdown amount, e.g., "$2,000"
     daily_loss_limit: str
     activation_fee: str
-    reset_fee: str = Field(default="", description="The fee to reset a failed account. This is typically NOT displayed on pricing pages. Leave empty if not explicitly mentioned.")
+    reset_fee: str = Field(default="", description="The fee to reset a failed account. Leave empty unless explicitly mentioned on the page.")
 
 class ExtractSchema(BaseModel):
-    """
-    Extract trading plan information from prop trading firm websites.
-    Important: Only extract information that is explicitly stated. 
-    Do not use crossed-out or promotional 'Was' prices.
-    If a field is not mentioned on the page, leave it empty.
-    """
     business_name: str
-    discount_code: str = Field(default="", description="Any promotional or discount code mentioned on the page")
-    trustpilot_score: str = Field(default="", description="The Trustpilot rating score if displayed")
+    discount_code: str
+    trustpilot_score: str
     plans: List[Plan]
 
 # -----------------------------
