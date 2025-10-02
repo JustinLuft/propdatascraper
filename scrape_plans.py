@@ -85,11 +85,13 @@ def clean_drawdown_fields(plan_dict):
 # -----------------------------
 urls = [
     "https://rightlinefunding.com/",
-    #"https://tradeify.co/",
-    #"https://apextraderfunding.com/",
-    #"https://myfundedfutures.com/",
-    #"https://thelegendstrading.com/",
-    #"https://www.topstep.com/",
+    "https://tradeify.co/",
+    "https://apextraderfunding.com/",
+    "https://myfundedfutures.com/",
+    "https://thelegendstrading.com/",
+    "https://www.topstep.com/",
+    "https://fundednext.com/",
+    
 ]
 
 all_plans = []
