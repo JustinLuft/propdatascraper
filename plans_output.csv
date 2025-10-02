@@ -1,28 +1,28 @@
 plan_name,price_raw,reset_fee,profit_goal,account_size,account_type,drawdown_mode,activation_fee,daily_loss_limit,trailing_drawdown,business_name,discount_code,trustpilot_score,source_url
-$50K Evaluation Account,$29,$149,"$3,000","$50,000",Evaluation,Intraday Trailing,$149,"$2,000",Yes,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
-$50K SIM Funded Account,$299.00,,"$3,000","$50,000",SIM Funded,Intraday Trailing,,"$2,000",Yes,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
-$150K Evaluation Account,$99.00,$149,"$10,500","$150,000",Evaluation,Intraday Trailing,$149,"$4,500",Yes,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
-$150K SIM Funded Account,$499.00,,"$10,500","$150,000",SIM Funded,Intraday Trailing,,"$4,500",Yes,Right Line Funding,50% OFF GRAND OPENING SALE,0.0,https://rightlinefunding.com/
-$25k account,$244,$85,,"$25,000",one time fee,End Of Day,$0,,"$1,000",Tradeify,OCT,4.7,https://tradeify.co/
-$50k account,$356,$169,"$3,000","$50,000",monthly fee,End Of Day,$0,"$1,250","$2,000",Tradeify,OCT,4.7,https://tradeify.co/
-$100k account,$440,$169,"$6,000","$100,000",monthly fee,End Of Day,$0,"$2,500","$3,500",Tradeify,OCT,4.7,https://tradeify.co/
-$150k account,$510,$197,"$9,000","$150,000",monthly fee,End Of Day,$0,"$3,750","$5,000",Tradeify,OCT,4.7,https://tradeify.co/
-25K FULL,$147/Month,$80/Reset/No Limit,"$1,500","$25,000",WealthCharts,,Included,,"$1,500",Apex Trader Funding,,4.5,https://apextraderfunding.com/
-50K FULL,$167/Month,$80/Reset/No Limit,"$3,000","$50,000",WealthCharts,,Included,,"$2,500",Apex Trader Funding,,4.5,https://apextraderfunding.com/
-100K FULL,$297/Month,$80/Reset/No Limit,"$6,000","$100,000",WealthCharts,,Included,,"$3,000",Apex Trader Funding,,4.5,https://apextraderfunding.com/
-150K FULL,$397/Month,$80/Reset/No Limit,"$9,000","$150,000",WealthCharts,,Included,,"$5,000",Apex Trader Funding,,4.5,https://apextraderfunding.com/
-250K FULL,$397/Month,$80/Reset/No Limit,"$15,000","$250,000",WealthCharts,,Included,,"$6,500",Apex Trader Funding,,4.5,https://apextraderfunding.com/
-300K FULL,$397/Month,$80/Reset/No Limit,"$20,000","$300,000",WealthCharts,,Included,,"$7,500",Apex Trader Funding,,4.5,https://apextraderfunding.com/
-100K STATIC,$137/Month,$80/Reset/No Limit,"$2,000","$100,000",WealthCharts,,Included,,$625,Apex Trader Funding,,4.5,https://apextraderfunding.com/
-Core,$77 / month,$0,"$3,000","$50,000",Sim Funded,EOD,$0,,"$2,000",MyFundedFutures,,4.5,https://myfundedfutures.com/
-"$25,000 Monthly Plan",$165 / per month,,"$1,500","$25,000",Apprentice,EOD trailing max loss,,,"$1,500",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$25,000 One-Time Plan",$399 / one-time,,"$2,000","$25,000",Apprentice,trailing max loss,,,"$1,500",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$50,000 Monthly Plan",$185 / per month,,"$3,000","$50,000",Apprentice,EOD trailing max loss,,,"$2,000",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$50,000 One-Time Plan",$499 / one-time,,"$3,000","$50,000",Apprentice,trailing max loss,,,"$2,000",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$100,000 Monthly Plan",$225 / per month,,"$6,000","$100,000",Apprentice,EOD trailing max loss,,,"$3,000",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$100,000 One-Time Plan",$599 / one-time,,"$4,000","$100,000",Apprentice,trailing max loss,,,"$3,000",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$150,000 Monthly Plan",$320 / per month,,"$9,000","$150,000",Apprentice,EOD trailing max loss,,,"$4,000",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
-"$150,000 One-Time Plan",$699 / one-time,,"$6,250","$150,000",Apprentice,trailing max loss,,,"$4,000",Legends Trading,OCT70,2.9,https://thelegendstrading.com/
+$50K Evaluation Account,$29,$0,"$3,000","$50,000",Evaluation,Intraday Trailing,$149,"$2,000",,Right Line Funding,50% OFF GRAND OPENING SALE,,https://rightlinefunding.com/
+$50K SIM Funded Account,$299.00,$0,"$3,000","$50,000",SIM Funded,Intraday Trailing,$0,"$2,000",,Right Line Funding,50% OFF GRAND OPENING SALE,,https://rightlinefunding.com/
+$150K Evaluation Account,$99.00,$0,"$10,500","$150,000",Evaluation,Intraday Trailing,$149,"$4,500",,Right Line Funding,50% OFF GRAND OPENING SALE,,https://rightlinefunding.com/
+$150K SIM Funded Account,$499.00,$0,"$10,500","$150,000",SIM Funded,Intraday Trailing,$0,"$4,500",,Right Line Funding,50% OFF GRAND OPENING SALE,,https://rightlinefunding.com/
+$25k account,$349,$85,None,"$25,000",One time fee,End Of Day,$0,"$1,000","$1,000",Tradeify,OCT,4.7,https://tradeify.co/
+$50k account,$509,$169,"$3,000","$50,000",One time fee,End Of Day,$0,"$1,250","$2,000",Tradeify,OCT,4.7,https://tradeify.co/
+$100k account,$629,$169,"$6,000","$100,000",One time fee,End Of Day,$0,"$2,500","$4,000",Tradeify,OCT,4.7,https://tradeify.co/
+$150k account,$729,$197,"$9,000","$150,000",One time fee,End Of Day,$0,"$3,750","$6,000",Tradeify,OCT,4.7,https://tradeify.co/
+25K FULL,$147/Month,$80/Reset/No Limit,"$1,500","$25,000",WealthCharts,None,Included,None,"$1,500",Apex Trader Funding,,,https://apextraderfunding.com/
+50K FULL,$167/Month,$80/Reset/No Limit,"$3,000","$50,000",WealthCharts,None,Included,None,"$2,500",Apex Trader Funding,,,https://apextraderfunding.com/
+100K FULL,$297/Month,$80/Reset/No Limit,"$6,000","$100,000",WealthCharts,None,Included,None,"$3,000",Apex Trader Funding,,,https://apextraderfunding.com/
+150K FULL,$397/Month,$80/Reset/No Limit,"$9,000","$150,000",WealthCharts,None,Included,None,"$5,000",Apex Trader Funding,,,https://apextraderfunding.com/
+250K FULL,$397/Month,$80/Reset/No Limit,"$15,000","$250,000",WealthCharts,None,Included,None,"$6,500",Apex Trader Funding,,,https://apextraderfunding.com/
+300K FULL,$397/Month,$80/Reset/No Limit,"$20,000","$300,000",WealthCharts,None,Included,None,"$7,500",Apex Trader Funding,,,https://apextraderfunding.com/
+100K STATIC,$137/Month,$80/Reset/No Limit,"$2,000","$100,000",WealthCharts,None,Included,None,$625,Apex Trader Funding,,,https://apextraderfunding.com/
+Core,$77 / month,$0,"$3,000","$50,000",Sim Funded,EOD,$0,None,"$2,000",MyFundedFutures,,0,https://myfundedfutures.com/
+"$25,000 Monthly Plan",$165,,"$1,500","$25,000",Monthly,EOD trailing max loss,,,"$1,500",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$25,000 One-Time Plan",$399,,"$2,000","$25,000",One-Time,trailing max loss,,,"$1,500",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$50,000 Monthly Plan",$185,,"$3,000","$50,000",Monthly,EOD trailing max loss,,,"$2,000",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$50,000 One-Time Plan",$499,,"$3,000","$50,000",One-Time,trailing max loss,,,"$2,000",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$100,000 Monthly Plan",$225,,"$6,000","$100,000",Monthly,EOD trailing max loss,,,"$3,000",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$100,000 One-Time Plan",$599,,"$4,000","$100,000",One-Time,trailing max loss,,,"$3,000",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$150,000 Monthly Plan",$320,,"$9,000","$150,000",Monthly,EOD trailing max loss,,,"$4,000",Legends Trading,OCT70,,https://thelegendstrading.com/
+"$150,000 One-Time Plan",$699,,"$6,250","$150,000",One-Time,trailing max loss,,,"$4,000",Legends Trading,OCT70,,https://thelegendstrading.com/
 $50k Buying Power,$49/mo,$149,"$3,000","50,000",Express Funded Account,Maximum Loss Limit,$149,"$2,000",5 Contracts,Topstep,,4.3,https://www.topstep.com/
 $100k Buying Power,$99/mo,$149,"$6,000","100,000",Express Funded Account,Maximum Loss Limit,$149,"$3,000",10 Contracts,Topstep,,4.3,https://www.topstep.com/
 $150k Buying Power,$149/mo,$149,"$9,000","150,000",Express Funded Account,Maximum Loss Limit,$149,"$4,500",15 Contracts,Topstep,,4.3,https://www.topstep.com/
