@@ -24,11 +24,11 @@ class Plan(BaseModel):
     account_size: str
     price_raw: str
     profit_goal: str
-    trailing_drawdown: str
+    drawdown_type: str  # e.g., "Intraday Trailing", "End of Day", etc.
+    drawdown: str  # The actual drawdown amount, e.g., "$2,000"
     daily_loss_limit: str
     activation_fee: str
     reset_fee: str
-    drawdown_mode: str  # New field
 
 class ExtractSchema(BaseModel):
     business_name: str
@@ -56,31 +56,28 @@ def convert_k_to_thousands(value):
 
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
-def normalize_trailing_drawdown(plan_dict):
+def clean_drawdown_fields(plan_dict):
     """
-    Ensure trailing_drawdown holds only the numeric/currency drawdown value.
-    Remove 'yes', 'no', 'Trailing', etc.
+    Ensure drawdown and drawdown_type are properly separated.
+    drawdown should contain the numeric value, drawdown_type should contain the type.
     """
-    candidates = []
-
-    # Collect any possible drawdown values
+    # If drawdown contains non-numeric text like "Trailing" or "Intraday Trailing",
+    # it's probably the type, not the value
     if "drawdown" in plan_dict:
-        candidates.append(plan_dict["drawdown"])
-    if "trailing_drawdown" in plan_dict:
-        candidates.append(plan_dict["trailing_drawdown"])
-
-    # Pick the first candidate that looks numeric
-    for val in candidates:
-        if val and re.search(r"\d", str(val)):
-            plan_dict["trailing_drawdown"] = val
-            break
-    else:
-        plan_dict["trailing_drawdown"] = ""
-
-    # Drop any extra drawdown field to avoid confusion
-    if "drawdown" in plan_dict:
-        del plan_dict["drawdown"]
-
+        drawdown_val = str(plan_dict.get("drawdown", ""))
+        # Check if it contains only descriptive text (no currency symbol or significant numbers)
+        if drawdown_val and not re.search(r'[\$€£¥]|\d{3,}', drawdown_val):
+            # This is likely a type, not a value
+            if not plan_dict.get("drawdown_type"):
+                plan_dict["drawdown_type"] = drawdown_val
+            plan_dict["drawdown"] = ""
+    
+    # Ensure empty strings for missing values
+    if not plan_dict.get("drawdown"):
+        plan_dict["drawdown"] = ""
+    if not plan_dict.get("drawdown_type"):
+        plan_dict["drawdown_type"] = ""
+    
     return plan_dict
 
 # -----------------------------
@@ -145,8 +142,12 @@ for url in urls:
                 if original_value != plan_dict["account_size"]:
                     print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
 
-            # Normalize trailing drawdown
-            plan_dict = normalize_trailing_drawdown(plan_dict)
+            # Clean drawdown fields
+            plan_dict = clean_drawdown_fields(plan_dict)
+            
+            # Rename drawdown to trailing_drawdown for CSV output
+            if "drawdown" in plan_dict:
+                plan_dict["trailing_drawdown"] = plan_dict.pop("drawdown")
 
             all_plans.append(plan_dict)
 
