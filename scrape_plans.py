@@ -56,6 +56,33 @@ def convert_k_to_thousands(value):
 
     return re.sub(pattern, replace_k, value, flags=re.IGNORECASE)
 
+def normalize_trailing_drawdown(plan_dict):
+    """
+    Ensure trailing_drawdown holds only the numeric/currency drawdown value.
+    Remove 'yes', 'no', 'Trailing', etc.
+    """
+    candidates = []
+
+    # Collect any possible drawdown values
+    if "drawdown" in plan_dict:
+        candidates.append(plan_dict["drawdown"])
+    if "trailing_drawdown" in plan_dict:
+        candidates.append(plan_dict["trailing_drawdown"])
+
+    # Pick the first candidate that looks numeric
+    for val in candidates:
+        if val and re.search(r"\d", str(val)):
+            plan_dict["trailing_drawdown"] = val
+            break
+    else:
+        plan_dict["trailing_drawdown"] = ""
+
+    # Drop any extra drawdown field to avoid confusion
+    if "drawdown" in plan_dict:
+        del plan_dict["drawdown"]
+
+    return plan_dict
+
 # -----------------------------
 # URLs to scrape
 # -----------------------------
@@ -117,6 +144,9 @@ for url in urls:
                 plan_dict["account_size"] = convert_k_to_thousands(original_value)
                 if original_value != plan_dict["account_size"]:
                     print(f"  Converted account_size: '{original_value}' -> '{plan_dict['account_size']}'")
+
+            # Normalize trailing drawdown
+            plan_dict = normalize_trailing_drawdown(plan_dict)
 
             all_plans.append(plan_dict)
 
