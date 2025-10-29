@@ -1,50 +1,43 @@
-plan_name,price_raw,reset_fee,profit_goal,account_size,account_type,drawdown_type,activation_fee,daily_loss_limit,business_name,discount_code,trustpilot_score,source_url,trailing_drawdown
-$50K Evaluation Account,$29,,"$3,000","$50,000",Evaluation,Intraday Trailing,$149,,Right Line Funding,,0.0,https://rightlinefunding.com/,"$2,000"
-$50K SIM Funded Account,$299.00,,"$3,000","$50,000",SIM Funded,Intraday Trailing,,,Right Line Funding,,0.0,https://rightlinefunding.com/,"$2,000"
-$150K Evaluation Account,$99.00,,"$10,500","$150,000",Evaluation,Intraday Trailing,$149,,Right Line Funding,,0.0,https://rightlinefunding.com/,"$4,500"
-$150K SIM Funded Account,$499.00,,"$10,500","$150,000",SIM Funded,Intraday Trailing,,,Right Line Funding,,0.0,https://rightlinefunding.com/,"$4,500"
-$25k account,$244,$85,"$3,000","$25,000",Simulated Funded,End Of Day,$0,,Tradeify,OCT,4.7,https://tradeify.co/,"$1,000"
-$50k account,$356,$85,"$3,000","$50,000",Simulated Funded,End Of Day,$0,"$1,250",Tradeify,OCT,4.7,https://tradeify.co/,"$2,000"
-$100k account,$440,$169,"$6,000","$100,000",Simulated Funded,End Of Day,$0,"$2,500",Tradeify,OCT,4.7,https://tradeify.co/,"$4,000"
-$150k account,$510,$197,"$9,000","$150,000",Simulated Funded,End Of Day,$0,"$3,750",Tradeify,OCT,4.7,https://tradeify.co/,"$6,000"
-25K FULL,$147/Month,,"$1,500","$25,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-50K FULL,$167/Month,,"$3,000","$50,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-100K FULL,$297/Month,,"$6,000","$100,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-150K FULL,$397/Month,,"$9,000","$150,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-250K FULL,$397/Month,,"$15,000","$250,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-300K FULL,$397/Month,,"$20,000","$300,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-100K STATIC,$137/Month,,"$2,000","$100,000",WealthCharts,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-25K FULL,$157/Month,,"$1,500","$25,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-50K FULL,$177/Month,,"$3,000","$50,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-100K FULL,$297/Month,,"$6,000","$100,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-150K FULL,$397/Month,,"$9,000","$150,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-250K FULL,$397/Month,,"$15,000","$250,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-300K FULL,$397/Month,,"$20,000","$300,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-100K STATIC,$147/Month,,"$2,000","$100,000",Rithmic,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-25K FULL,$167/Month,,"$1,500","$25,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-50K FULL,$187/Month,,"$3,000","$50,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-100K FULL,$297/Month,,"$6,000","$100,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-150K FULL,$397/Month,,"$9,000","$150,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-250K FULL,$397/Month,,"$15,000","$250,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-300K FULL,$397/Month,,"$20,000","$300,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-100K STATIC,$157/Month,,"$2,000","$100,000",Tradovate,,,,Apex Trader Funding,,4.5,https://apextraderfunding.com/,
-Core,$77 / month,,"$3,000","$50,000",Sim Funded,EOD,$0,,MyFundedFutures,,4.9,https://myfundedfutures.com/,"$2,000"
-Scale,$77 / month,,"$3,000","$50,000",Sim Funded,EOD,$0,,MyFundedFutures,,4.9,https://myfundedfutures.com/,"$2,000"
-Pro,$77 / month,,"$3,000","$50,000",Sim Funded,EOD,$0,,MyFundedFutures,,4.9,https://myfundedfutures.com/,"$2,000"
-"$25,000 - Monthly",$165,,"$1,500 profit goal","$25,000",Apprentice,EOD trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$1,500 EOD trailing max loss"
-"$25,000 - One-time",$399,,"$2,000 profit goal","$25,000",Apprentice,trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$1,500 trailing max loss"
-"$50,000 - Monthly",$185,,"$3,000 profit goal","$50,000",Apprentice,EOD trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$2,000 EOD trailing max loss"
-"$50,000 - One-time",$499,,"$3,000 profit goal","$50,000",Apprentice,trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$2,000 trailing max loss"
-"$100,000 - Monthly",$225,,"$6,000 profit goal","$100,000",Apprentice,EOD trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$3,000 EOD trailing max loss"
-"$100,000 - One-time",$599,,"$4,000 profit goal","$100,000",Apprentice,trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$3,000 trailing max loss"
-"$150,000 - Monthly",$320,,"$9,000 profit goal","$150,000",Apprentice,EOD trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$4,000 EOD trailing max loss"
-"$150,000 - One-time",$699,,"$6,250 profit goal","$150,000",Apprentice,trailing max loss,,,Legends Trading,OCT70,2.9,https://thelegendstrading.com/,"$4,000 trailing max loss"
-$50k Buying Power,$49/mo,$149,"$3,000","$50,000",Express Funded Account,Maximum Drawdown,$149,"$2,000",Topstep,,4.3,https://www.topstep.com/,"$3,000"
-$100k Buying Power,$99/mo,$149,"$6,000","$100,000",Express Funded Account,Maximum Drawdown,$149,"$3,000",Topstep,,4.3,https://www.topstep.com/,"$6,000"
-$150k Buying Power,$149/mo,$149,"$9,000","$150,000",Express Funded Account,Maximum Drawdown,$149,"$4,500",Topstep,,4.3,https://www.topstep.com/,"$9,000"
-$6k,$59.99,,8%,"$6,000",CFD,Fixed,,5% ($300),FundedNext,,4.6,https://fundednext.com/,10% ($600)
-$15k,$119.99,,8%,"$15,000",CFD,Fixed,,5% ($750),FundedNext,,4.6,https://fundednext.com/,"10% ($1,500)"
-$25k,$199.99,,8%,"$25,000",CFD,Fixed,,"5% ($1,250)",FundedNext,,4.6,https://fundednext.com/,"10% ($2,500)"
-$50k,$299.99,,8%,"$50,000",CFD,Fixed,,"5% ($2,500)",FundedNext,,4.6,https://fundednext.com/,"10% ($5,000)"
-$100k,$549.99,,8%,"$100,000",CFD,Fixed,,"5% ($5,000)",FundedNext,,4.6,https://fundednext.com/,"10% ($10,000)"
-$200k,"$1,099.99",,8%,"$200,000",CFD,Fixed,,"5% ($10,000)",FundedNext,,4.6,https://fundednext.com/,"10% ($20,000)"
+plan_name,price_raw,account_size,account_type,activation_fee,drawdown_type,daily_loss_limit,reset_fee,profit_goal,business_name,discount_code,trustpilot_score,source_url,trailing_drawdown
+$150k account,$90,"$150,000",Evaluation,$125,Intraday,None,$79,"$9,000",Tradeify,OCT,4.7,https://tradeify.co/,"$4,500"
+25K FULL,$167/Month,"$25,000",WealthCharts,$55,Trailing Threshold,None,$80,"$1,500",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$1,500"
+50K FULL,$187/Month,"$50,000",WealthCharts,$55,Trailing Threshold,None,$80,"$3,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$2,500"
+100K FULL,$297/Month,"$100,000",WealthCharts,$55,Trailing Threshold,None,$80,"$6,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$3,000"
+150K FULL,$397/Month,"$150,000",WealthCharts,$55,Trailing Threshold,None,$80,"$9,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$5,000"
+250K FULL,$497/Month,"$250,000",WealthCharts,$55,Trailing Threshold,None,$80,"$15,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$6,500"
+300K FULL,$597/Month,"$300,000",WealthCharts,$55,Trailing Threshold,None,$80,"$20,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$7,500"
+100K STATIC,$157/Month,"$100,000",WealthCharts,$55,Max Drawdown,None,$80,"$2,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,$625
+25K FULL,$167/Month,"$25,000",Rithmic,$55,Trailing Threshold,None,$80,"$1,500",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$1,500"
+50K FULL,$187/Month,"$50,000",Rithmic,$55,Trailing Threshold,None,$80,"$3,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$2,500"
+100K FULL,$297/Month,"$100,000",Rithmic,$55,Trailing Threshold,None,$80,"$6,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$3,000"
+150K FULL,$397/Month,"$150,000",Rithmic,$55,Trailing Threshold,None,$80,"$9,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$5,000"
+250K FULL,$497/Month,"$250,000",Rithmic,$55,Trailing Threshold,None,$80,"$15,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$6,500"
+300K FULL,$597/Month,"$300,000",Rithmic,$55,Trailing Threshold,None,$80,"$20,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$7,500"
+100K STATIC,$157/Month,"$100,000",Rithmic,$55,Max Drawdown,None,$80,"$2,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,$625
+25K FULL,$167/Month,"$25,000",Tradovate,$55,Trailing Threshold,None,$100,"$1,500",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$1,500"
+50K FULL,$187/Month,"$50,000",Tradovate,$55,Trailing Threshold,None,$100,"$3,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$2,500"
+100K FULL,$297/Month,"$100,000",Tradovate,$55,Trailing Threshold,None,$100,"$6,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$3,000"
+150K FULL,$397/Month,"$150,000",Tradovate,$55,Trailing Threshold,None,$100,"$9,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$5,000"
+250K FULL,$497/Month,"$250,000",Tradovate,$55,Trailing Threshold,None,$100,"$15,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$6,500"
+300K FULL,$597/Month,"$300,000",Tradovate,$55,Trailing Threshold,None,$100,"$20,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,"$7,500"
+100K STATIC,$157/Month,"$100,000",Tradovate,$55,Max Drawdown,None,$100,"$2,000",Apex Trader Funding,80% Off Evals,,https://apextraderfunding.com/,$625
+Scale,$127 / month,"$50,000",,,EOD,None,,"$3,000",MyFundedFutures,,,https://myfundedfutures.com/,"$2,000"
+Core,$267 / month,"$100,000",,,EOD,None,,"$6,000",MyFundedFutures,,,https://myfundedfutures.com/,"$3,000"
+Pro,$377 / month,"$150,000",,,EOD,None,,"$9,000",MyFundedFutures,,,https://myfundedfutures.com/,"$4,500"
+Apprentice,$165 / per month,"$25,000",Evaluation,No Activation Fee,EOD trailing max loss,No daily loss limit,,"$1,500",Legends Trading,LTG,,https://thelegendstrading.com/,"$1,500 EOD trailing max loss"
+Apprentice,$399 / one-time,"$25,000",Evaluation,,trailing max loss,No daily loss limit,,"$2,000",Legends Trading,LTG,,https://thelegendstrading.com/,"$1,500 trailing max loss"
+Apprentice,$185 / per month,"$50,000",Evaluation,No Activation Fee,EOD trailing max loss,No daily loss limit,,"$3,000",Legends Trading,LTG,,https://thelegendstrading.com/,"$2,000 EOD trailing max loss"
+Apprentice,$499 / one-time,"$50,000",Evaluation,,trailing max loss,No daily loss limit,,"$3,000",Legends Trading,LTG,,https://thelegendstrading.com/,"$2,000 trailing max loss"
+Apprentice,$225 / per month,"$100,000",Evaluation,No Activation Fee,EOD trailing max loss,No daily loss limit,,"$6,000",Legends Trading,LTG,,https://thelegendstrading.com/,"$3,000 EOD trailing max loss"
+Apprentice,$599 / one-time,"$100,000",Evaluation,,trailing max loss,No daily loss limit,,"$4,000",Legends Trading,LTG,,https://thelegendstrading.com/,"$3,000 trailing max loss"
+Apprentice,$320 / per month,"$150,000",Evaluation,No Activation Fee,EOD trailing max loss,No daily loss limit,,"$9,000",Legends Trading,LTG,,https://thelegendstrading.com/,"$4,000 EOD trailing max loss"
+Apprentice,$699 / one-time,"$150,000",Evaluation,,trailing max loss,No daily loss limit,,"$6,250",Legends Trading,LTG,,https://thelegendstrading.com/,"$4,000 trailing max loss"
+$50k Buying Power,$49/mo USD,"$50,000",Trading Combine®,$149,Maximum Loss Limit,,,"$3,000",Topstep,,4.3,https://www.topstep.com/,"$2,000"
+$100k Buying Power,$99/mo USD,"$100,000",Trading Combine®,$149,Maximum Loss Limit,,,"$6,000",Topstep,,4.3,https://www.topstep.com/,"$3,000"
+$150k Buying Power,$149/mo USD,"$150,000",Trading Combine®,$149,Maximum Loss Limit,,,"$9,000",Topstep,,4.3,https://www.topstep.com/,"$4,500"
+$6k Get Plan,$59.99,"$6,000",Stellar 2-Step,$59.99,Maximum Loss Limit,5% ($300),,8%,FundedNext,BOO2GO,4.6,https://fundednext.com/,10% ($600)
+$15k Get Plan,$119.99,"$15,000",Stellar 2-Step,$119.99,Maximum Loss Limit,5% ($750),,8%,FundedNext,BOO2GO,4.6,https://fundednext.com/,"10% ($1,500)"
+$25k Get Plan,$199.99,"$25,000",Stellar 2-Step,$199.99,Maximum Loss Limit,"5% ($1,250)",,8%,FundedNext,BOO2GO,4.6,https://fundednext.com/,"10% ($2,500)"
+$50k Get Plan,$299.99,"$50,000",Stellar 2-Step,$299.99,Maximum Loss Limit,"5% ($2,500)",,8%,FundedNext,BOO2GO,4.6,https://fundednext.com/,"10% ($5,000)"
+$100k Get Plan,$549.99,"$100,000",Stellar 2-Step,$549.99,Maximum Loss Limit,"5% ($5,000)",,8%,FundedNext,BOO2GO,4.6,https://fundednext.com/,"10% ($10,000)"
+$200k Get Plan,"$1,099.99","$200,000",Stellar 2-Step,"$1,099.99",Maximum Loss Limit,"5% ($10,000)",,8%,FundedNext,BOO2GO,4.6,https://fundednext.com/,"10% ($20,000)"
