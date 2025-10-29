@@ -19,7 +19,7 @@ jobs:
           pip install firecrawl pandas pydantic  # Latest version needed
       - name: Run scraper
         env:
-          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY2 }}
         run: |
           python scrape_plans.py
       - name: Configure git
