@@ -13,7 +13,7 @@ import json
 # -----------------------------
 # Initialize Firecrawl
 # -----------------------------
-api_key = os.getenv("FIRECRAWL_API_KEY2")
+api_key = os.getenv("FIRECRAWL_API_KEY")
 app = FirecrawlApp(api_key=api_key)
 
 # -----------------------------
